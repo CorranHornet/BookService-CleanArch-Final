@@ -1,60 +1,51 @@
-﻿using BookService.Infrastructure.Persistence;
-using BookService.Application.Interfaces;
-using BookService.Infrastructure.Services;
+﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
-using BookService.Application.DTOs;
-
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
+using BookService.Infrastructure.Repositories;
 
 namespace BookService.Infrastructure.Services
 {
     public class GenreService : IGenreService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IGenreRepository _repo;
 
-        public GenreService(ApplicationDbContext context)
+        public GenreService(IGenreRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         public async Task<List<GenreResponseDTO>> GetAllGenresAsync()
         {
-            var genres = await _context.Genres
-                .Select(g => new GenreResponseDTO
-                {
-                    Id = g.Id,
-                    Name = g.Name
-                })
-                .ToListAsync();
+            var genres = await _repo.GetAll();
 
-            return genres;
+            return genres.Select(g => new GenreResponseDTO
+            {
+                Id = g.Id,
+                Name = g.Name
+            }).ToList();
         }
 
-        public async Task<GenreResponseDTO> GetGenreByIdAsync(int id)
+        public async Task<GenreResponseDTO?> GetGenreByIdAsync(int id)
         {
-            var genre = await _context.Genres
-                .Where(g => g.Id == id)
-                .Select(g => new GenreResponseDTO
-                {
-                    Id = g.Id,
-                    Name = g.Name
-                })
-                .FirstOrDefaultAsync();
+            var genre = await _repo.GetById(id);
+            if (genre == null) return null;
 
-            return genre;
+            return new GenreResponseDTO
+            {
+                Id = genre.Id,
+                Name = genre.Name
+            };
         }
 
-        public async Task<GenreResponseDTO> CreateGenreAsync(GenreCreateDTO genreDto)
+        public async Task<GenreResponseDTO> CreateGenreAsync(GenreCreateDTO dto)
         {
             var genre = new Genre
             {
-                Name = genreDto.Name
+                Name = dto.Name
             };
 
-            _context.Genres.Add(genre);
-            await _context.SaveChangesAsync();
+            await _repo.Add(genre);
+            await _repo.Save();
 
             return new GenreResponseDTO
             {
@@ -65,28 +56,16 @@ namespace BookService.Infrastructure.Services
 
         public async Task<bool> DeleteGenreAsync(int genreId)
         {
-            var genre = await _context.Genres
-                .FirstOrDefaultAsync(g => g.Id == genreId);
+            var genre = await _repo.GetById(genreId);
+            if (genre == null) return false;
 
-            if (genre == null)
-            {
-                return false;  // Genre doesn't exist
-            }
+            if (await _repo.HasMediaItems(genreId))
+                return false;
 
-            // Check if any media items are linked to the genre
-            var mediaItemsLinkedToGenre = await _context.MediaItems
-                .AnyAsync(m => m.GenreId == genreId);
+            await _repo.Delete(genre);
+            await _repo.Save();
 
-            if (mediaItemsLinkedToGenre)
-            {
-                return false;  // Genre has MediaItems, can't delete it
-            }
-
-            // Delete the genre if no MediaItems are linked
-            _context.Genres.Remove(genre);
-            await _context.SaveChangesAsync();
-
-            return true;  // Genre deleted successfully
+            return true;
         }
     }
 }

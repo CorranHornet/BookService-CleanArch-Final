@@ -4,7 +4,7 @@ using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookService.Infrastructure.Services
+namespace BookService.Infrastructure.Services.TST
 {
     public class LoanService : ILoanService
     {

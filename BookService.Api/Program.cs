@@ -57,7 +57,11 @@ builder.Services.AddScoped<IMediaItemService, MediaItemService>();
 
 
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();
-builder.Services.AddScoped<ILoanService, LoanService>();
+builder.Services.AddScoped<IMediaItemRepository, MediaItemRepository>();
+builder.Services.AddScoped<IMediaItemService, MediaItemService>();
+builder.Services.AddScoped<IMediaUnitRepository, MediaUnitRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+
 
 // 4. JWT & AUTH (Keep your existing logic)
 var key = Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!);

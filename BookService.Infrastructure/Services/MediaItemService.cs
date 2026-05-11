@@ -1,216 +1,143 @@
-﻿using BookService.Infrastructure.Persistence;
+﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
-using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 
-using Microsoft.EntityFrameworkCore;
-
-namespace BookService.Infrastructure.Services
+public class MediaItemService : IMediaItemService
 {
-    public class MediaItemService : IMediaItemService
+    private readonly IMediaItemRepository _repo;
+
+    public MediaItemService(IMediaItemRepository repo)
     {
-        private readonly ApplicationDbContext _context;
+        _repo = repo;
+    }
 
-        public MediaItemService(ApplicationDbContext context)
+    public async Task<IEnumerable<MediaItemResponseDTO>> GetAllAsync(string? search = null)
+    {
+        var items = await _repo.GetAll(search);
+
+        return items.Select(t => new MediaItemResponseDTO
         {
-            _context = context;
+            Id = t.Id,
+            Title = t.Title,
+            Description = t.Description,
+
+            GenreId = t.GenreId,
+            Genre = t.Genre.Name,
+
+            Creator = t.Creator,
+            ReleaseDate = t.ReleaseDate,
+            ScheduledDate = t.ScheduledDate,
+            PageCount = t.PageCount,
+            DurationMinutes = t.DurationMinutes,
+            TrackCount = t.TrackCount,
+            Publisher = t.Publisher,
+            Language = t.Language,
+            MediaType = t.MediaType
+        });
+    }
+
+    public async Task<MediaItemResponseDTO?> GetByIdAsync(int id)
+    {
+        var t = await _repo.GetById(id);
+        if (t == null) return null;
+
+        return new MediaItemResponseDTO
+        {
+            Id = t.Id,
+            Title = t.Title,
+            Description = t.Description,
+            GenreId = t.GenreId,
+            Genre = t.Genre.Name,
+            Creator = t.Creator,
+            ReleaseDate = t.ReleaseDate,
+            ScheduledDate = t.ScheduledDate,
+            PageCount = t.PageCount,
+            DurationMinutes = t.DurationMinutes,
+            TrackCount = t.TrackCount,
+            Publisher = t.Publisher,
+            Language = t.Language,
+            MediaType = t.MediaType
+        };
+    }
+
+    public async Task<MediaItemResponseDTO> CreateAsync(MediaItemCreateDTO dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Title))
+            throw new ArgumentException("Title is required");
+
+        var genre = await _repo.GetGenre(dto.GenreId);
+        if (genre == null)
+            throw new ArgumentException("Invalid GenreId");
+
+        var mediaItem = new MediaItem
+        {
+            Title = dto.Title,
+            Description = dto.Description,
+            Creator = dto.Creator,
+            ReleaseDate = dto.ReleaseDate,
+            ScheduledDate = dto.ScheduledDate,
+            PageCount = dto.PageCount,
+            DurationMinutes = dto.DurationMinutes,
+            TrackCount = dto.TrackCount,
+            Publisher = dto.Publisher,
+            Language = dto.Language,
+            MediaType = dto.MediaType,
+            GenreId = genre.Id
+        };
+
+        await _repo.Add(mediaItem);
+        await _repo.Save();
+
+        return new MediaItemResponseDTO
+        {
+            Id = mediaItem.Id,
+            Title = mediaItem.Title,
+            GenreId = mediaItem.GenreId,
+            Genre = genre.Name,
+            Description = mediaItem.Description,
+            Creator = mediaItem.Creator,
+            ReleaseDate = mediaItem.ReleaseDate,
+            ScheduledDate = mediaItem.ScheduledDate,
+            PageCount = mediaItem.PageCount,
+            DurationMinutes = mediaItem.DurationMinutes,
+            TrackCount = mediaItem.TrackCount,
+            Publisher = mediaItem.Publisher,
+            Language = mediaItem.Language,
+            MediaType = mediaItem.MediaType
+        };
+    }
+
+    public async Task<bool> UpdateAsync(int id, MediaItemUpdateDTO dto)
+    {
+        var item = await _repo.GetById(id);
+        if (item == null) return false;
+
+        if (!string.IsNullOrWhiteSpace(dto.Title))
+            item.Title = dto.Title;
+
+        if (dto.GenreId.HasValue)
+        {
+            var exists = await _repo.GenreExists(dto.GenreId.Value);
+            if (!exists) return false;
+
+            item.GenreId = dto.GenreId.Value;
         }
 
-        // GET ALL
-        public async Task<IEnumerable<MediaItemResponseDTO>> GetAllAsync(string? search = null)
-        {
-            var query = _context.MediaItems
-                .Include(m => m.Genre)
-                .AsQueryable();
+        await _repo.Save();
+        return true;
+    }
 
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                query = query.Where(x =>
-                    x.Title != null &&
-                    x.Title.ToLower().Contains(search.ToLower()));
-            }
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var item = await _repo.GetById(id);
+        if (item == null) return false;
 
-            return await query
-                .Select(t => new MediaItemResponseDTO
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Description = t.Description,
+        if (await _repo.HasMediaUnits(id))
+            return false;
 
-                    GenreId = t.GenreId,
-                    Genre = t.Genre.Name,
+        await _repo.Delete(item);
+        await _repo.Save();
 
-                    Creator = t.Creator,
-                    ReleaseDate = t.ReleaseDate,
-                    ScheduledDate = t.ScheduledDate,
-                    PageCount = t.PageCount,
-                    DurationMinutes = t.DurationMinutes,
-                    TrackCount = t.TrackCount,
-                    Publisher = t.Publisher,
-                    Language = t.Language,
-                    MediaType = t.MediaType
-                })
-                .ToListAsync();
-        }
-
-        // GET BY ID
-        public async Task<MediaItemResponseDTO?> GetByIdAsync(int id)
-        {
-            return await _context.MediaItems
-                .Include(m => m.Genre)
-                .Where(m => m.Id == id)
-                .Select(t => new MediaItemResponseDTO
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Description = t.Description,
-
-                    GenreId = t.GenreId,
-                    Genre = t.Genre.Name,
-
-                    Creator = t.Creator,
-                    ReleaseDate = t.ReleaseDate,
-                    ScheduledDate = t.ScheduledDate,
-                    PageCount = t.PageCount,
-                    DurationMinutes = t.DurationMinutes,
-                    TrackCount = t.TrackCount,
-                    Publisher = t.Publisher,
-                    Language = t.Language,
-                    MediaType = t.MediaType
-                })
-                .FirstOrDefaultAsync();
-        }
-
-        // CREATE
-        public async Task<MediaItemResponseDTO> CreateAsync(MediaItemCreateDTO dto)
-        {
-            if (string.IsNullOrWhiteSpace(dto.Title))
-                throw new ArgumentException("Title is required");
-
-            // validate genre exists
-            var genre = await _context.Genres
-                .FirstOrDefaultAsync(g => g.Id == dto.GenreId);
-
-            if (genre == null)
-                throw new ArgumentException("Invalid GenreId");
-
-            var mediaItem = new MediaItem
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                Creator = dto.Creator,
-                ReleaseDate = dto.ReleaseDate,
-                ScheduledDate = dto.ScheduledDate,
-                PageCount = dto.PageCount,
-                DurationMinutes = dto.DurationMinutes,
-                TrackCount = dto.TrackCount,
-                Publisher = dto.Publisher,
-                Language = dto.Language,
-                MediaType = dto.MediaType,
-
-                GenreId = genre.Id
-            };
-
-            _context.MediaItems.Add(mediaItem);
-            await _context.SaveChangesAsync();
-
-            return new MediaItemResponseDTO
-            {
-                Id = mediaItem.Id,
-                Title = mediaItem.Title,
-
-                GenreId = mediaItem.GenreId,
-                Genre = genre.Name,
-
-                Description = mediaItem.Description,
-                Creator = mediaItem.Creator,
-                ReleaseDate = mediaItem.ReleaseDate,
-                ScheduledDate = mediaItem.ScheduledDate,
-                PageCount = mediaItem.PageCount,
-                DurationMinutes = mediaItem.DurationMinutes,
-                TrackCount = mediaItem.TrackCount,
-                Publisher = mediaItem.Publisher,
-                Language = mediaItem.Language,
-                MediaType = mediaItem.MediaType
-            };
-        }
-
-        // UPDATE
-        public async Task<bool> UpdateAsync(int id, MediaItemUpdateDTO dto)
-        {
-            var mediaItem = await _context.MediaItems
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (mediaItem == null)
-                return false;
-
-            if (!string.IsNullOrWhiteSpace(dto.Title))
-                mediaItem.Title = dto.Title;
-
-            if (dto.ReleaseDate.HasValue)
-                mediaItem.ReleaseDate = dto.ReleaseDate.Value;
-
-            if (dto.ScheduledDate.HasValue)
-                mediaItem.ScheduledDate = dto.ScheduledDate.Value;
-
-            if (!string.IsNullOrWhiteSpace(dto.Description))
-                mediaItem.Description = dto.Description;
-
-            if (!string.IsNullOrWhiteSpace(dto.Creator))
-                mediaItem.Creator = dto.Creator;
-
-            if (dto.PageCount.HasValue)
-                mediaItem.PageCount = dto.PageCount.Value;
-
-            if (dto.DurationMinutes.HasValue)
-                mediaItem.DurationMinutes = dto.DurationMinutes.Value;
-
-            if (dto.TrackCount.HasValue)
-                mediaItem.TrackCount = dto.TrackCount.Value;
-
-            if (!string.IsNullOrWhiteSpace(dto.Publisher))
-                mediaItem.Publisher = dto.Publisher;
-
-            if (!string.IsNullOrWhiteSpace(dto.Language))
-                mediaItem.Language = dto.Language;
-
-            if (!string.IsNullOrWhiteSpace(dto.MediaType))
-                mediaItem.MediaType = dto.MediaType;
-
-            if (dto.GenreId.HasValue)
-            {
-                var genreExists = await _context.Genres
-                    .AnyAsync(g => g.Id == dto.GenreId.Value);
-
-                if (!genreExists)
-                    return false;
-
-                mediaItem.GenreId = dto.GenreId.Value;
-            }
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // DELETE
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var hasUnits = await _context.MediaUnits
-                .AnyAsync(mu => mu.MediaItemId == id);
-
-            if (hasUnits)
-                return false;
-
-            var mediaItem = await _context.MediaItems
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (mediaItem == null)
-                return false;
-
-            _context.MediaItems.Remove(mediaItem);
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
+        return true;
     }
 }

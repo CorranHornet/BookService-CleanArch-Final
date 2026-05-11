@@ -1,58 +1,51 @@
-﻿using BookService.Infrastructure.Persistence;
-using BookService.Application.DTOs;
-using BookService.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
+using BookService.Domain.Entities;
+using BookService.Infrastructure.Repositories;
 
 namespace BookService.Infrastructure.Services
 {
     public class MediaUnitService : IMediaUnitService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMediaUnitRepository _repo;
 
-        public MediaUnitService(ApplicationDbContext context)
+        public MediaUnitService(IMediaUnitRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
-        // GET ALL
         public async Task<IEnumerable<MediaUnitResponseDTO>> GetAllAsync()
         {
-            return await _context.MediaUnits
-                .Select(mu => new MediaUnitResponseDTO
-                {
-                    Id = mu.Id,
-                    Title = mu.Title,
-                    Number = mu.Number,
-                    DurationMinutes = mu.DurationMinutes,
-                    MediaItemId = mu.MediaItemId
-                })
-                .ToListAsync();
+            var units = await _repo.GetAll();
+
+            return units.Select(mu => new MediaUnitResponseDTO
+            {
+                Id = mu.Id,
+                Title = mu.Title,
+                Number = mu.Number,
+                DurationMinutes = mu.DurationMinutes,
+                MediaItemId = mu.MediaItemId
+            });
         }
 
-        // GET BY ID
         public async Task<MediaUnitResponseDTO?> GetByIdAsync(int id)
         {
-            return await _context.MediaUnits
-                .Where(mu => mu.Id == id)
-                .Select(mu => new MediaUnitResponseDTO
-                {
-                    Id = mu.Id,
-                    Title = mu.Title,
-                    Number = mu.Number,
-                    DurationMinutes = mu.DurationMinutes,
-                    MediaItemId = mu.MediaItemId
-                })
-                .FirstOrDefaultAsync();
+            var mu = await _repo.GetById(id);
+            if (mu == null) return null;
+
+            return new MediaUnitResponseDTO
+            {
+                Id = mu.Id,
+                Title = mu.Title,
+                Number = mu.Number,
+                DurationMinutes = mu.DurationMinutes,
+                MediaItemId = mu.MediaItemId
+            };
         }
 
-        // CREATE
         public async Task<MediaUnitResponseDTO> CreateAsync(MediaUnitCreateDTO dto)
         {
-            var mediaItemExists = await _context.MediaItems
-                .AnyAsync(m => m.Id == dto.MediaItemId);
-
-            if (!mediaItemExists)
+            if (!await _repo.MediaItemExists(dto.MediaItemId))
                 throw new Exception("MediaItem not found");
 
             var entity = new MediaUnit
@@ -63,8 +56,8 @@ namespace BookService.Infrastructure.Services
                 MediaItemId = dto.MediaItemId
             };
 
-            _context.MediaUnits.Add(entity);
-            await _context.SaveChangesAsync();
+            await _repo.Add(entity);
+            await _repo.Save();
 
             return new MediaUnitResponseDTO
             {
@@ -76,13 +69,10 @@ namespace BookService.Infrastructure.Services
             };
         }
 
-        // UPDATE
         public async Task<bool> UpdateAsync(int id, MediaUnitUpdateDTO dto)
         {
-            var entity = await _context.MediaUnits.FindAsync(id);
-
-            if (entity == null)
-                return false;
+            var entity = await _repo.GetById(id);
+            if (entity == null) return false;
 
             if (!string.IsNullOrWhiteSpace(dto.Title))
                 entity.Title = dto.Title;
@@ -93,35 +83,26 @@ namespace BookService.Infrastructure.Services
             if (dto.DurationMinutes.HasValue)
                 entity.DurationMinutes = dto.DurationMinutes.Value;
 
-            await _context.SaveChangesAsync();
+            await _repo.Save();
             return true;
         }
 
-        // DELETE (only if NOT borrowed)
         public async Task<bool> DeleteAsync(int id)
         {
-            var hasActiveLoan = await _context.Loans
-                .AnyAsync(l => l.MediaUnitId == id && l.ReturnDate == null);
+            var entity = await _repo.GetById(id);
+            if (entity == null) return false;
 
-            if (hasActiveLoan)
+            if (await _repo.HasActiveLoan(id))
                 return false;
 
-            var entity = await _context.MediaUnits.FindAsync(id);
-
-            if (entity == null)
-                return false;
-
-            _context.MediaUnits.Remove(entity);
-            await _context.SaveChangesAsync();
+            await _repo.Delete(entity);
+            await _repo.Save();
 
             return true;
         }
 
-        // DERIVED AVAILABILITY (THIS IS THE CORRECT DESIGN)
-        public async Task<bool> IsAvailableAsync(int mediaUnitId)
-        {
-            return !await _context.Loans
-                .AnyAsync(l => l.MediaUnitId == mediaUnitId && l.ReturnDate == null);
-        }
+        public Task<bool> IsAvailableAsync(int mediaUnitId)
+            => _repo.HasActiveLoan(mediaUnitId)
+                .ContinueWith(t => !t.Result);
     }
 }
