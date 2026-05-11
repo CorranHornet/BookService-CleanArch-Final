@@ -1,6 +1,6 @@
 ﻿using BookService.Domain.Entities;
 
-namespace BookService.Api.DTOs
+namespace BookService.Application.DTOs
 {
     public class LoanResponseDTO
     {

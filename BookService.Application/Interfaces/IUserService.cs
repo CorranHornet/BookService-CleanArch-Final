@@ -1,6 +1,7 @@
-﻿using BookService.Api.DTOs;
+﻿using BookService.Application.DTOs;
 
-namespace BookService.Api.Services
+
+namespace BookService.Application.Interfaces
 {
     public interface IUserService
     {

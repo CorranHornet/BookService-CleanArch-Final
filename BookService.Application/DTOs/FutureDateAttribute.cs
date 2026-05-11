@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BookService.Api.DTOs
+namespace BookService.Application.DTOs
 {
     public class FutureDateAttribute : ValidationAttribute
     {

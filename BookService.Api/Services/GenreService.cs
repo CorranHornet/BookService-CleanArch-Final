@@ -1,7 +1,7 @@
 ﻿using BookService.Infrastructure.Persistence;
 
 using BookService.Domain.Entities;
-using BookService.Api.DTOs;
+using BookService.Application.DTOs;
 
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;

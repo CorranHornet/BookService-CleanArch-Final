@@ -1,4 +1,4 @@
-﻿using BookService.Api.DTOs;
+﻿using BookService.Application.DTOs;
 using BookService.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 

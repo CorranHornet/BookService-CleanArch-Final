@@ -1,5 +1,5 @@
-﻿using BookService.Api.DTOs;
-using BookService.Api.Services;
+﻿using BookService.Application.DTOs;
+using BookService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

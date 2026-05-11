@@ -1,4 +1,4 @@
-﻿using BookService.Api.DTOs;
+﻿using BookService.Application.DTOs;
 using BookService.Api.Services;
 using BookService.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;

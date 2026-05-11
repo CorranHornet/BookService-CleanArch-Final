@@ -1,4 +1,4 @@
-﻿using BookService.Api.Services;
+﻿using BookService.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookService.Api.Controllers

@@ -6,7 +6,9 @@ using Scalar.AspNetCore;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using BookService.Infrastructure.Services;
 using BookService.Api.Services;
+//using BookService.Infrastructure.Services;
 using Microsoft.Identity.Client;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +39,8 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
+
 // Bridge between Interface and Context
 builder.Services.AddScoped<IApplicationDbContext>(provider =>
     provider.GetRequiredService<ApplicationDbContext>());
@@ -48,6 +52,8 @@ builder.Services.AddScoped<IMediaUnitService, MediaUnitService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IMediaItemService, MediaItemService>();
+
 // 4. JWT & AUTH (Keep your existing logic)
 var key = Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

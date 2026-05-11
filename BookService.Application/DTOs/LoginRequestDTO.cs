@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization; // Glöm inte denna using!
 using BookService.Domain.Entities;
 
-namespace BookService.Api.DTOs
+namespace BookService.Application.DTOs
 {
     public class LoginRequestDTO
     {

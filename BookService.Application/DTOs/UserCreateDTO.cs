@@ -1,10 +1,7 @@
-﻿using Azure.Identity;
-
-namespace BookService.Api.DTOs
+﻿namespace BookService.Application.DTOs
 {
-    public class UserResponseDTO
+    public class UserCreateDTO
     {
-        public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
     }

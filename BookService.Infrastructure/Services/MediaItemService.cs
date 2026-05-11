@@ -1,11 +1,11 @@
-﻿/*using BookService.Infrastructure.Persistence;
+﻿using BookService.Infrastructure.Persistence;
+using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
 using BookService.Domain.Entities;
-using BookService.Application.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace BookService.Application.Interfaces
+namespace BookService.Infrastructure.Services
 {
     public class MediaItemService : IMediaItemService
     {
@@ -213,4 +213,4 @@ namespace BookService.Application.Interfaces
             return true;
         }
     }
-} */
+}

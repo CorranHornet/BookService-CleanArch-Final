@@ -1,6 +1,6 @@
-﻿
+﻿using BookService.Application.DTOs;
 
-namespace BookService.Api.DTOs
+namespace BookService.Application.DTOs
 {
     public class GenreResponseDTO
     {

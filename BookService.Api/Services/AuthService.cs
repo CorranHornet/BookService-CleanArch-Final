@@ -2,7 +2,7 @@
 //using BookService.Api.Services;
 
 using BookService.Domain.Entities;
-using BookService.Api.DTOs;
+using BookService.Application.DTOs;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

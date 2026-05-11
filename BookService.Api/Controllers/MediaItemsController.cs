@@ -1,5 +1,5 @@
 ﻿
-using BookService.Api.DTOs;
+using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;

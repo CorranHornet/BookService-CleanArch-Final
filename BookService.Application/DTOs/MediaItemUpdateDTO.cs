@@ -1,11 +1,10 @@
-﻿namespace BookService.Api.DTOs
+﻿namespace BookService.Application.DTOs
 {
-    public class MediaItemCreateDTO
+    public class MediaItemUpdateDTO
     {
-        public string Title { get; set; } = null!;
-        public int GenreId { get; set; }
-
+        public string? Title { get; set; }
         public string? Description { get; set; }
+        public int? GenreId { get; set; }
         public string? Creator { get; set; }
         public DateTime? ReleaseDate { get; set; }
         public DateTime? ScheduledDate { get; set; }

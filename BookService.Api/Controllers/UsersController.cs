@@ -1,5 +1,5 @@
-﻿using BookService.Api.DTOs;
-using BookService.Api.Services;
+﻿using BookService.Application.DTOs;
+using BookService.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookService.Api.Controllers

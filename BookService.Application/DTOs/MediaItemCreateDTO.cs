@@ -1,12 +1,11 @@
-﻿namespace BookService.Api.DTOs
+﻿namespace BookService.Application.DTOs
 {
-    public class MediaItemResponseDTO
+    public class MediaItemCreateDTO
     {
-        public int Id { get; set; }
-        public string? Title { get; set; }
-        public string? Description { get; set; }
+        public string Title { get; set; } = null!;
         public int GenreId { get; set; }
-        public string Genre { get; set; } = string.Empty; //Only send the Genre name (not the full ojbect)
+
+        public string? Description { get; set; }
         public string? Creator { get; set; }
         public DateTime? ReleaseDate { get; set; }
         public DateTime? ScheduledDate { get; set; }

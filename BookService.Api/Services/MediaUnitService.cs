@@ -1,5 +1,5 @@
 ﻿using BookService.Infrastructure.Persistence;
-using BookService.Api.DTOs;
+using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
