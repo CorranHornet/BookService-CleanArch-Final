@@ -1,4 +1,4 @@
-﻿using BookService.Api.Data;
+﻿using BookService.Infrastructure.Persistence;
 using BookService.Api.DTOs;
 using BookService.Domain.Entities;
 
@@ -8,9 +8,9 @@ namespace BookService.Api.Services
 {
     public class MediaItemService : IMediaItemService
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public MediaItemService(AppDbContext context)
+        public MediaItemService(ApplicationDbContext context)
         {
             _context = context;
         }

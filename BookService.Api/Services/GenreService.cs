@@ -1,4 +1,4 @@
-﻿using BookService.Api.Data;
+﻿using BookService.Infrastructure.Persistence;
 
 using BookService.Domain.Entities;
 using BookService.Api.DTOs;
@@ -10,9 +10,9 @@ namespace BookService.Api.Services
 {
     public class GenreService : IGenreService
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public GenreService(AppDbContext context)
+        public GenreService(ApplicationDbContext context)
         {
             _context = context;
         }

@@ -1,4 +1,4 @@
-﻿using BookService.Api.Data;
+﻿using BookService.Infrastructure.Persistence;
 using BookService.Api.DTOs;
 using BookService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -7,9 +7,9 @@ namespace BookService.Api.Services
 {
     public class MediaUnitService : IMediaUnitService
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public MediaUnitService(AppDbContext context)
+        public MediaUnitService(ApplicationDbContext context)
         {
             _context = context;
         }

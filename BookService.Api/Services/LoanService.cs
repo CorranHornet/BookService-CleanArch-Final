@@ -1,4 +1,4 @@
-﻿using BookService.Api.Data;
+﻿using BookService.Infrastructure.Persistence;
 using BookService.Api.DTOs;
 
 
@@ -10,9 +10,9 @@ namespace BookService.Api.Services
 {
     public class LoanService : ILoanService
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public LoanService(AppDbContext context)
+        public LoanService(ApplicationDbContext context)
         {
             _context = context;
         }

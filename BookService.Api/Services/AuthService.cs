@@ -1,4 +1,4 @@
-﻿using BookService.Api.Data;
+﻿using BookService.Infrastructure.Persistence;
 //using BookService.Api.Services;
 
 using BookService.Domain.Entities;
@@ -13,7 +13,7 @@ using System.Text;
 
 namespace BookService.Api.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(ApplicationDbContext context, IConfiguration configuration) : IAuthService
     {
         public async Task<User?> RegisterAsync(LoginRequestDTO request)
         {

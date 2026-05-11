@@ -1,6 +1,7 @@
-﻿using BookService.Api.Data;
+﻿
 using BookService.Api.DTOs;
 using BookService.Domain.Entities;
+using BookService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +11,9 @@ namespace BookService.Api.Controllers
     [Route("api/[controller]")]
     public class MediaItemsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public MediaItemsController(AppDbContext context)
+        public MediaItemsController(ApplicationDbContext context)
         {
             _context = context;
         }

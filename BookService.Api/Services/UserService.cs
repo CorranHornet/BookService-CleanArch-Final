@@ -1,4 +1,4 @@
-﻿using BookService.Api.Data;
+﻿using BookService.Infrastructure.Persistence;
 using BookService.Api.DTOs;
 
 using BookService.Domain.Entities;
@@ -10,9 +10,9 @@ namespace BookService.Api.Services
 {
     public class UserService : IUserService
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public UserService(AppDbContext context)
+        public UserService(ApplicationDbContext context)
         {
             _context = context;
         }
