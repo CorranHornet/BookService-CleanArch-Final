@@ -1,17 +1,16 @@
 ﻿using BookService.Infrastructure.Persistence;
 //using BookService.Api.Services;
-
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Identity;
 using BookService.Domain.Entities;
 using BookService.Application.DTOs;
-
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace BookService.Api.Services
+namespace BookService.Application.Interfaces
 {
     public class AuthService(ApplicationDbContext context, IConfiguration configuration) : IAuthService
     {

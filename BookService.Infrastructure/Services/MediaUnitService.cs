@@ -2,8 +2,9 @@
 using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using BookService.Application.Interfaces;
 
-namespace BookService.Api.Services
+namespace BookService.Infrastructure.Services
 {
     public class MediaUnitService : IMediaUnitService
     {

@@ -1,12 +1,14 @@
 ﻿using BookService.Infrastructure.Persistence;
-
+using BookService.Application.Interfaces;
+using BookService.Infrastructure.Services;
+using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using BookService.Application.DTOs;
 
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
-namespace BookService.Api.Services
+namespace BookService.Infrastructure.Services
 {
     public class GenreService : IGenreService
     {

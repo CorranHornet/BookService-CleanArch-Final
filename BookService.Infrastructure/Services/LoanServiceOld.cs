@@ -1,13 +1,10 @@
-﻿/*using BookService.Infrastructure.Persistence;
-using BookService.Application.DTOs;
-
+﻿using BookService.Infrastructure.Persistence;
 using BookService.Application.Interfaces;
-
+using BookService.Application.DTOs;
 using BookService.Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
 
-namespace BookService.Api.Services
+namespace BookService.Infrastructure.Services
 {
     public class LoanService : ILoanService
     {
@@ -99,4 +96,4 @@ namespace BookService.Api.Services
                 .ToListAsync();
         }
     }
-} */
+}

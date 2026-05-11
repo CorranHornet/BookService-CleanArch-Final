@@ -1,99 +1,71 @@
-﻿using BookService.Infrastructure.Persistence;
+﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
-using BookService.Application.DTOs;
 using BookService.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
-namespace BookService.Infrastructure.Services
+public class LoanService : ILoanService
 {
-    public class LoanService : ILoanService
+    private readonly ILoanRepository _repo;
+
+    public LoanService(ILoanRepository repo)
     {
-        private readonly ApplicationDbContext _context;
+        _repo = repo;
+    }
 
-        public LoanService(ApplicationDbContext context)
+    public async Task<bool> BorrowAsync(int userId, int mediaUnitId)
+    {
+        if (!await _repo.UserExists(userId)) return false;
+        if (!await _repo.MediaUnitExists(mediaUnitId)) return false;
+        if (await _repo.IsAlreadyLoaned(mediaUnitId)) return false;
+
+        var loan = new Loan
         {
-            _context = context;
-        }
+            UserId = userId,
+            MediaUnitId = mediaUnitId,
+            LoanDate = DateTime.UtcNow
+        };
 
-        // -------------------------
-        // BORROW (SAFE + CORRECT)
-        // -------------------------
-        public async Task<bool> BorrowAsync(int userId, int mediaUnitId)
+        await _repo.AddLoan(loan);
+        await _repo.SaveChanges();
+
+        return true;
+    }
+
+    public async Task<bool> ReturnAsync(int loanId)
+    {
+        var loan = await _repo.GetById(loanId);
+        if (loan == null || loan.ReturnDate != null)
+            return false;
+
+        loan.ReturnDate = DateTime.UtcNow;
+
+        await _repo.SaveChanges();
+        return true;
+    }
+
+    public async Task<IEnumerable<LoanResponseDTO>> GetAllAsync()
+    {
+        var loans = await _repo.GetAllWithIncludes();
+
+        return loans.Select(l => new LoanResponseDTO
         {
-            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
-            if (!userExists) return false;
+            Id = l.Id,
+            LoanDate = l.LoanDate,
+            ReturnDate = l.ReturnDate,
 
-            var unitExists = await _context.MediaUnits.AnyAsync(mu => mu.Id == mediaUnitId);
-            if (!unitExists) return false;
-
-            // 🔥 ONLY ONE ACTIVE LOAN ALLOWED
-            var isAlreadyLoaned = await _context.Loans
-                .AnyAsync(l => l.MediaUnitId == mediaUnitId && l.ReturnDate == null);
-
-            if (isAlreadyLoaned)
-                return false;
-
-            var loan = new Loan
+            User = new UserDTO
             {
-                UserId = userId,
-                MediaUnitId = mediaUnitId,
-                LoanDate = DateTime.UtcNow,
-                ReturnDate = null
-            };
+                Id = l.User.Id,
+                Username = l.User.Username,
+                Email = l.User.Email
+            },
 
-            _context.Loans.Add(loan);
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-
-        // -------------------------
-        // RETURN
-        // -------------------------
-        public async Task<bool> ReturnAsync(int loanId)
-        {
-            var loan = await _context.Loans
-                .FirstOrDefaultAsync(l => l.Id == loanId);
-
-            if (loan == null) return false;
-            if (loan.ReturnDate != null) return false;
-
-            loan.ReturnDate = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // -------------------------
-        // GET ALL
-        // -------------------------
-        public async Task<IEnumerable<LoanResponseDTO>> GetAllAsync()
-        {
-            return await _context.Loans
-                .Include(l => l.User)
-                .Include(l => l.MediaUnit)
-                .Select(l => new LoanResponseDTO
-                {
-                    Id = l.Id,
-                    LoanDate = l.LoanDate,
-                    ReturnDate = l.ReturnDate,
-
-                    User = new UserDTO
-                    {
-                        Id = l.User.Id,
-                        Username = l.User.Username,
-                        Email = l.User.Email
-                    },
-
-                    MediaUnit = new MediaUnitDTO
-                    {
-                        Id = l.MediaUnit.Id,
-                        Title = l.MediaUnit.Title,
-                        Number = l.MediaUnit.Number,
-                        MediaItemId = l.MediaUnit.MediaItemId
-                    }
-                })
-                .ToListAsync();
-        }
+            MediaUnit = new MediaUnitDTO
+            {
+                Id = l.MediaUnit.Id,
+                Title = l.MediaUnit.Title,
+                Number = l.MediaUnit.Number,
+                MediaItemId = l.MediaUnit.MediaItemId
+            }
+        });
     }
 }

@@ -27,8 +27,4 @@
 		<ProjectReference Include="..\BookService.Infrastructure\BookService.Infrastructure.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="DTOs\" />
-	</ItemGroup>
-
 </Project>
