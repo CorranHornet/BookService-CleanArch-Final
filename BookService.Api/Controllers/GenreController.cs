@@ -1,5 +1,5 @@
 ﻿using BookService.Application.DTOs;
-
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using BookService.Infrastructure.Services;
 using BookService.Application.Interfaces;
@@ -7,6 +7,8 @@ using BookService.Infrastructure.Services;
 using BookService.Application.Users.Queries;
 using BookService.Application.Users.Handlers;
 using BookService.Application.Users.Commands;
+using BookService.Application.Genres.Queries;
+using BookService.Application.Genres.Commands;
 
 
 namespace BookService.Api.Controllers
@@ -15,28 +17,30 @@ namespace BookService.Api.Controllers
     [ApiController]
     public class GenreController : ControllerBase
     {
-        private readonly IGenreService _genreService;
+        private readonly IMediator _mediator;
 
-        public GenreController(IGenreService genreService)
+        public GenreController(IMediator mediator)
         {
-            _genreService = genreService;
+            _mediator = mediator;
         }
 
         // GET: api/genre
         [HttpGet]
-        public async Task<IActionResult> GetGenres()
-        {
-            var genres = await _genreService.GetAllGenresAsync();
-            return Ok(genres);
-        }
+        public async Task<IActionResult> GetAll()
+
+        => Ok(await _mediator.Send(new GetGenresQuery()));
+
+        [HttpGet("id")]
+        public async Task<IActionResult> GetById(int id)
+            => Ok(await _mediator.Send(new GetGenreByIdQuery(id)));
+            
+        
 
         // POST: api/genre
         [HttpPost]
-        public async Task<IActionResult> CreateGenre([FromBody] GenreCreateDTO genreDto)
-        {
-            var genre = await _genreService.CreateGenreAsync(genreDto);
-            return CreatedAtAction(nameof(GetGenres), new { id = genre.Id }, genre);
-        }
+        public async Task<IActionResult> Create(CreateGenreCommand command)
+             => Ok(await _mediator.Send(command));
+        
 
         // DELETE: api/genre/{id}
         [HttpDelete("{id}")]
