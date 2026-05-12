@@ -1,5 +1,8 @@
 ﻿using BookService.Domain.Entities;
-
+using BookService.Application.Users.Commands;
+using BookService.Application.Users.Handlers;
+using BookService.Application.Users.Commands;
+using BookService.Application.DTOs;
 
 namespace BookService.Application.Interfaces
 {

@@ -1,5 +1,8 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
+using BookService.Application.Users.Commands;
+using BookService.Application.Users.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookService.Api.Controllers
@@ -8,23 +11,23 @@ namespace BookService.Api.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly IUserService _service;
-        public UsersController(IUserService service)
+        private readonly IMediator _mediator;
+        public UsersController(IMediator mediator)
         {
-            _service = service;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var users = await _service.GetAllAsync();
+            var users = await _mediator.Send(new GetUsersQuery());
             return Ok(users);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var user = await _service.GetByIdAsync(id);
+            var user = await _mediator.Send(new GetUserByIdQuery(id));
 
             if (user == null)
                 return NotFound();
@@ -35,7 +38,8 @@ namespace BookService.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(UserCreateDTO dto)
         {
-            var user = await _service.CreateAsync(dto);
+            var command = new CreateUserCommand(dto.Username, dto.Email);
+            var user = await _mediator.Send(command);
             return Ok(user);
         }
 
@@ -44,7 +48,7 @@ namespace BookService.Api.Controllers
         {
             try
             {
-                var result = await _service.DeleteAsync(id);
+                var result = await _mediator.Send(new DeleteUserCommand(id));
 
                 if (!result)
                     return NotFound();

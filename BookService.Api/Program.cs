@@ -11,6 +11,10 @@ using BookService.Application.Interfaces;
 //using BookService.Infrastructure.Services;
 using BookService.Infrastructure.Repositories;
 using Microsoft.Identity.Client;
+using BookService.Application.Users.Queries;
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +58,12 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMediaItemService, MediaItemService>();
+
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(GetUsersQuery).Assembly));
 
 
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();

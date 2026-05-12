@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using BookService.Infrastructure.Services;
 using BookService.Application.Interfaces;
 using BookService.Infrastructure.Services;
+using BookService.Application.Users.Queries;
+using BookService.Application.Users.Handlers;
+using BookService.Application.Users.Commands;
 
 
 namespace BookService.Api.Controllers

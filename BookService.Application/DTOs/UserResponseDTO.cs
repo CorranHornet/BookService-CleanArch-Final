@@ -1,4 +1,6 @@
 ﻿using Azure.Identity;
+using BookService.Application.Users.Commands;
+
 
 namespace BookService.Application.DTOs
 {
