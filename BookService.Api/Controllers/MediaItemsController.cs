@@ -1,9 +1,8 @@
 ﻿
-using BookService.Application.DTOs;
-using BookService.Domain.Entities;
-using BookService.Infrastructure.Persistence;
+using BookService.Application.MediaItems.Commands;
+using BookService.Application.MediaItems.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BookService.Api.Controllers
 {
@@ -11,114 +10,69 @@ namespace BookService.Api.Controllers
     [Route("api/[controller]")]
     public class MediaItemsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMediator _mediator;
 
-        public MediaItemsController(ApplicationDbContext context)
+        public MediaItemsController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
-        // GET: api/mediaitems
+       
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(string? search)
         {
-            var items = await _context.MediaItems
-                .Include(m => m.Genre)
-                .ToListAsync();
-
-            return Ok(items);
+            var result = await _mediator.Send(new GetAllMediaItemsQuery(search));
+            return Ok(result);
         }
 
-        // GET: api/mediaitems/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var item = await _context.MediaItems
-                .Include(m => m.Genre)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (item == null)
-                return NotFound();
-
-            return Ok(item);
-        }
-
-        // POST: api/mediaitems
         [HttpPost]
-        public async Task<IActionResult> Create(MediaItemCreateDTO dto)
+        public async Task<IActionResult> Create([FromBody] CreateMediaItemCommand command)
         {
-            var genreExists = await _context.Genres
-                .AnyAsync(g => g.Id == dto.GenreId);
+            var result = await _mediator.Send(command);
 
-            if (!genreExists)
-                return BadRequest("Invalid GenreId");
-
-            var mediaItem = new MediaItem
-            {
-                Title = dto.Title,
-                GenreId = dto.GenreId,
-                Description = dto.Description,
-                Creator = dto.Creator,
-                ReleaseDate = dto.ReleaseDate,
-                ScheduledDate = dto.ScheduledDate,
-                PageCount = dto.PageCount,
-                DurationMinutes = dto.DurationMinutes,
-                TrackCount = dto.TrackCount,
-                Publisher = dto.Publisher,
-                Language = dto.Language,
-                MediaType = dto.MediaType
-            };
-
-            _context.MediaItems.Add(mediaItem);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = mediaItem.Id }, mediaItem);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-        // PUT: api/mediaitems/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, MediaItemCreateDTO dto)
+        [HttpPut("id")]
+        public async Task<IActionResult> Update(int id, UpdateMediaItemCommand command)
         {
-            var item = await _context.MediaItems.FindAsync(id);
+            command.Id = id;
 
-            if (item == null)
+            var success = await _mediator.Send(command);
+
+            if (!success)
                 return NotFound();
-
-            var genreExists = await _context.Genres
-                .AnyAsync(g => g.Id == dto.GenreId);
-
-            if (!genreExists)
-                return BadRequest("Invalid GenreId");
-
-            item.Title = dto.Title;
-            item.GenreId = dto.GenreId;
-            item.Description = dto.Description;
-            item.Creator = dto.Creator;
-            item.ReleaseDate = dto.ReleaseDate;
-            item.ScheduledDate = dto.ScheduledDate;
-            item.PageCount = dto.PageCount;
-            item.DurationMinutes = dto.DurationMinutes;
-            item.TrackCount = dto.TrackCount;
-            item.Publisher = dto.Publisher;
-            item.Language = dto.Language;
-            item.MediaType = dto.MediaType;
-
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        // DELETE: api/mediaitems/5
+        
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _mediator.Send(new GetMediaItemByIdQuery(id));
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+         
+       
+
+
+
+        
+        
+
+        
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = await _context.MediaItems.FindAsync(id);
+            var success = await _mediator.Send(new DeleteMediaItemCommand(id));
 
-            if (item == null)
+            if (!success)
                 return NotFound();
-
-            _context.MediaItems.Remove(item);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }

@@ -33,27 +33,20 @@ namespace BookService.Api.Controllers
         [HttpGet("id")]
         public async Task<IActionResult> GetById(int id)
             => Ok(await _mediator.Send(new GetGenreByIdQuery(id)));
-            
-        
+
+
 
         // POST: api/genre
         [HttpPost]
         public async Task<IActionResult> Create(CreateGenreCommand command)
              => Ok(await _mediator.Send(command));
-        
+
 
         // DELETE: api/genre/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGenre(int id)
-        {
-            var result = await _genreService.DeleteGenreAsync(id);
+        public async Task<IActionResult> Delete(int id)
 
-            if (!result)
-            {
-                return NotFound("Genre not found or has associated MediaItems.");
-            }
+           => Ok(await _mediator.Send(new DeleteGenreCommand(id)));
 
-            return Ok("Genre deleted successfully.");
-        }
     }
 }

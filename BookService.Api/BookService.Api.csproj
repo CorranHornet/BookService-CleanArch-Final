@@ -20,6 +20,7 @@
 		</PackageReference>
 		<!-- Use 1.2.14 to avoid the '1.2.0 not found' warning -->
 		<PackageReference Include="Scalar.AspNetCore" Version="1.2.14" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.*" />
 	</ItemGroup>
 
 	<ItemGroup>
