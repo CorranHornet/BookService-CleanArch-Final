@@ -1,72 +1,46 @@
-﻿using BookService.Application.DTOs;
-using BookService.Infrastructure.Services;
-using BookService.Application.Interfaces;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using BookService.Application.MediaUnits.Commands;
+using BookService.Application.MediaUnits.Queries;
+using BookService.Application.MediaUnits.Handlers;
 
-namespace BookService.Api.Controllers
+namespace BookService.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class MediaUnitsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class MediaUnitsController : ControllerBase
+    private readonly IMediator _mediator;
+    public MediaUnitsController(IMediator mediator) => _mediator = mediator;
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll() 
+        => Ok(await _mediator.Send(new GetAllMediaUnitsQuery()));
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
     {
-        private readonly IMediaUnitService _service;
+        var result = await _mediator.Send(new GetMediaUnitByIdQuery(id));
+        return result != null ? Ok(result) : NotFound();
+    }
 
-        public MediaUnitsController(IMediaUnitService service)
-        {
-            _service = service;
-        }
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateMediaUnitCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return result != null ? Ok(result) : NotFound($"MediaItem {command.MediaItemId} not found.");
+    }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, UpdateMediaUnitCommand command)
+    {
+        command.Id = id;
+        return await _mediator.Send(command) ? NoContent() : NotFound();
+    }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var mediaUnits = await _service.GetAllAsync();
-            return Ok(mediaUnits);
-        }
-
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var mediaUnit = await _service.GetByIdAsync(id);
-            if (mediaUnit == null)
-                return NotFound();
-
-            return Ok(mediaUnit);
-        }
-
-
-        [HttpPost]
-        public async Task<IActionResult> Create(MediaUnitCreateDTO dto)
-        {
-
-            var created = await _service.CreateAsync(dto);
-            if (created == null)
-                return NotFound($"MediaItem with ID {dto.MediaItemId}) not found.");
-
-            return Ok(created);
-        }
-
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, MediaUnitUpdateDTO dto)
-        {
-            var success = await _service.UpdateAsync(id, dto);
-            if (!success)
-                return NotFound();
-
-            return NoContent();
-        }
-
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var success = await _service.DeleteAsync(id);
-            if (!success)
-                return NotFound();
-
-            return NoContent();
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        return await _mediator.Send(new DeleteMediaUnitCommand(id)) ? NoContent() : NotFound();
     }
 }

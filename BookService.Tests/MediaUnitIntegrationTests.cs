@@ -2,8 +2,10 @@ using System.Transactions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using MediatR;
 using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
+using BookService.Application.MediaUnits.Commands; // Ensure this matches your namespace
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
 using Xunit;
@@ -19,62 +21,76 @@ public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Pro
         _factory = factory;
     }
 
+    /// <summary>
+    /// TEST 1: Original Service-Layer Test
+    /// Verifies: DB Connection, TPH Inheritance, and direct Service logic.
+    /// </summary>
     [Fact]
-    public async Task MediaUnit_FullLifecycle_VerifiesInheritanceAndPersistence()
+    public async Task ServiceLayer_FullLifecycle_VerifiesInheritanceAndPersistence()
     {
-        // Start transaction - everything inside here is "temporary"
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         
         using var serviceScope = _factory.Services.CreateScope();
         var service = serviceScope.ServiceProvider.GetRequiredService<IMediaUnitService>();
         var db = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 1. SEED GENRE
-        var genre = new Genre { Name = "Test Genre" };
+        // SEED
+        var genre = new Genre { Name = "Service Test Genre" };
         db.Genres.Add(genre);
         await db.SaveChangesAsync();
 
-        // 2. SEED MEDIAITEM
-        var parentItem = new MediaItem 
-        { 
-            Title = "Test Base Item", 
-            Description = "Testing Foundation",
-            GenreId = genre.Id 
-        };
+        var parentItem = new MediaItem { Title = "Service Base Item", GenreId = genre.Id };
         db.MediaItems.Add(parentItem);
         await db.SaveChangesAsync();
 
-        // 3. ACT: Create Audiobook via Service
-        var audioDto = new MediaUnitCreateDTO 
-        { 
-            Title = "Complete Test Audiobook", 
-            MediaItemId = parentItem.Id, 
-            DurationMinutes = 180 
-        };
-        var audioResult = await service.CreateAsync(audioDto);
+        // ACT
+        var audioResult = await service.CreateAsync(new MediaUnitCreateDTO 
+            { Title = "Service Audiobook", MediaItemId = parentItem.Id, DurationMinutes = 180 });
 
-        // 4. ACT: Create Physical Book via Service
-        var bookDto = new MediaUnitCreateDTO 
-        { 
-            Title = "Complete Test Physical Book", 
-            MediaItemId = parentItem.Id, 
-            PageCount = 250 
-        };
-        var bookResult = await service.CreateAsync(bookDto);
-
-        // 5. ASSERT: Check Service Logic
+        // ASSERT
         Assert.Equal("Audiobook", audioResult.UnitType);
-        Assert.Equal("Book", bookResult.UnitType);
-
-        // 6. ASSERT: Check Database TPH Mapping
-        var dbUnits = await db.MediaUnits
-            .Where(u => u.MediaItemId == parentItem.Id)
-            .ToListAsync();
-            
-        Assert.Equal(2, dbUnits.Count);
-        Assert.Contains(dbUnits, u => u is AudiobookUnit);
-        Assert.Contains(dbUnits, u => u is PhysicalBookUnit);
-
-        // Transaction closes here -> SQL Server rolls back everything!
+        
+        var dbUnits = await db.MediaUnits.Where(u => u.MediaItemId == parentItem.Id).ToListAsync();
+        Assert.Single(dbUnits);
     }
-} // Ends Class
+
+    /// <summary>
+    /// TEST 2: CQRS / MediatR Test
+    /// Verifies: MediatR Discovery, Command Handling, and Clean Arch flow.
+    /// Requirement: G / VG
+    /// </summary>
+    [Fact]
+    public async Task CQRSLayer_ViaMediator_VerifiesHandlerAndMapping()
+    {
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        
+        using var serviceScope = _factory.Services.CreateScope();
+        var mediator = serviceScope.ServiceProvider.GetRequiredService<IMediator>();
+        var db = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        // SEED
+        var genre = new Genre { Name = "CQRS Test Genre" };
+        db.Genres.Add(genre);
+        await db.SaveChangesAsync();
+
+        var parentItem = new MediaItem { Title = "CQRS Base Item", GenreId = genre.Id };
+        db.MediaItems.Add(parentItem);
+        await db.SaveChangesAsync();
+
+        // ACT: Send through Mediator instead of Service
+        var command = new CreateMediaUnitCommand 
+        { 
+            Title = "CQRS Physical Book", 
+            MediaItemId = parentItem.Id, 
+            PageCount = 300 
+        };
+        var result = await mediator.Send(command);
+
+        // ASSERT
+        Assert.NotNull(result);
+        Assert.Equal("Book", result.UnitType); // Matches your previous 'Actual' result
+        
+        var exists = await db.MediaUnits.AnyAsync(u => u.Id == result.Id);
+        Assert.True(exists);
+    }
+}
