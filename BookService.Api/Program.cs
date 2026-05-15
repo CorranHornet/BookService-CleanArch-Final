@@ -1,34 +1,62 @@
+using BookService.Application.Common.Mapping;
 using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
 using BookService.Infrastructure.Repositories;
 using BookService.Infrastructure.Services;
+using Mapster;
+using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -----------------------------
-// SERVICES (DI SETUP)
-// -----------------------------
+// ======================================================
+// CONTROLLERS
+// ======================================================
 builder.Services.AddControllers();
 
-// DbContext (your Infrastructure layer)
+// ======================================================
+// DB CONTEXT (Infrastructure)
+// ======================================================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Repositories + Services
-builder.Services.AddScoped<IMediaUnitRepository, MediaUnitRepository>();
-builder.Services.AddScoped<IMediaUnitService, MediaUnitService>();
-
-var app = builder.Build();
-
-app.UseRouting();
-app.MapControllers();
-
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
 
 // ======================================================
-// 🧪 DIAGNOSTIC TEST HARNESS
+// REPOSITORIES / SERVICES
+// ======================================================
+builder.Services.AddScoped<IMediaUnitRepository, MediaUnitRepository>();
+builder.Services.AddScoped<IMediaUnitService, MediaUnitService>();
+builder.Services.AddScoped<ILoanRepository, LoanRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+
+// ======================================================
+// MAPSTER CONFIGURATION (FIX FOR YOUR ERROR)
+// ======================================================
+
+// register your mapping rules
+MapsterConfig.Register();
+
+// register Mapster DI dependencies
+builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
+builder.Services.AddScoped<IMapper, ServiceMapper>();
+
+// ======================================================
+var app = builder.Build();
+
+// ======================================================
+// PIPELINE
+// ======================================================
+app.UseRouting();
+
+app.MapControllers();
+
+// ======================================================
+// DEVELOPMENT DIAGNOSTIC TEST HARNESS
 // ======================================================
 if (app.Environment.IsDevelopment())
 {
@@ -42,9 +70,8 @@ if (app.Environment.IsDevelopment())
     var repo = scope.ServiceProvider.GetRequiredService<IMediaUnitRepository>();
     var service = scope.ServiceProvider.GetRequiredService<IMediaUnitService>();
 
-
     // --------------------------------------------------
-    // TEST 0 — EF MODEL INSPECTION (VERY IMPORTANT)
+    // TEST 0 — EF MODEL INSPECTION
     // --------------------------------------------------
     Console.WriteLine("[TEST 0] EF Core Model Inspection");
 
@@ -62,9 +89,8 @@ if (app.Environment.IsDevelopment())
         }
     }
 
-
     // --------------------------------------------------
-    // TEST 1 — DIRECT DB CONTEXT INSERT
+    // TEST 1 — DB CONTEXT
     // --------------------------------------------------
     try
     {
@@ -76,7 +102,6 @@ if (app.Environment.IsDevelopment())
             Number = 1,
             DurationMinutes = 100,
             MediaItemId = 1
-            // IsAvailable intentionally missing (if exists in DB)
         };
 
         db.MediaUnits.Add(entity);
@@ -87,13 +112,11 @@ if (app.Environment.IsDevelopment())
     catch (Exception ex)
     {
         Console.WriteLine("❌ DbContext insert FAILED");
-
         Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
     }
 
-
     // --------------------------------------------------
-    // TEST 2 — REPOSITORY LAYER
+    // TEST 2 — REPOSITORY
     // --------------------------------------------------
     try
     {
@@ -118,9 +141,8 @@ if (app.Environment.IsDevelopment())
         Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
     }
 
-
     // --------------------------------------------------
-    // TEST 3 — SERVICE LAYER (REAL BUSINESS FLOW)
+    // TEST 3 — SERVICE
     // --------------------------------------------------
     try
     {
@@ -144,71 +166,6 @@ if (app.Environment.IsDevelopment())
         Console.WriteLine("❌ SERVICE FAILED");
         Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
     }
-
-
-    // --------------------------------------------------
-    // TEST 4 — RAW DATABASE READBACK
-    // --------------------------------------------------
-    try
-    {
-        Console.WriteLine("\n[TEST 4] Read-back validation");
-
-        var last = await db.MediaUnits
-            .OrderByDescending(x => x.Id)
-            .FirstOrDefaultAsync();
-
-        if (last != null)
-        {
-            Console.WriteLine("✔ Read SUCCESS");
-            Console.WriteLine($"Title: {last.Title}");
-
-            var isAvailableProp = last.GetType().GetProperty("IsAvailable");
-
-            if (isAvailableProp != null)
-            {
-                Console.WriteLine($"IsAvailable: {isAvailableProp.GetValue(last)}");
-            }
-            else
-            {
-                Console.WriteLine("⚠ IsAvailable DOES NOT EXIST on entity model");
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("❌ READ FAILED");
-        Console.WriteLine(ex.Message);
-    }
-
-
-    // --------------------------------------------------
-    // TEST 5 — FORCED FAILURE (REPRODUCE YOUR BUG)
-    // --------------------------------------------------
-    try
-    {
-        Console.WriteLine("\n[TEST 5] Forced NULL insert (BUG REPRODUCE)");
-
-        var badEntity = new MediaUnit
-        {
-            Title = "FORCED FAILURE TEST",
-            Number = 99,
-            DurationMinutes = 10,
-            MediaItemId = 1
-            // IsAvailable missing again intentionally
-        };
-
-        db.MediaUnits.Add(badEntity);
-        await db.SaveChangesAsync();
-
-        Console.WriteLine("✔ Unexpected success (check schema!)");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("❌ EXPECTED FAILURE OCCURRED");
-        Console.WriteLine("ROOT CAUSE:");
-        Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
-    }
-
 
     Console.WriteLine("\n======================================");
     Console.WriteLine(" DIAGNOSTIC COMPLETE");

@@ -4,13 +4,15 @@
     {
         public int Id { get; set; }
 
+        // FK → MediaUnit
         public int MediaUnitId { get; set; }
         public MediaUnit MediaUnit { get; set; } = null!;
 
+        // FK → User
         public int UserId { get; set; }
         public User User { get; set; } = null!;
 
-        public DateTime LoanDate { get; set; } = DateTime.Now;
-        public DateTime? ReturnDate { get; set; } // null if not returned yet
+        public DateTime LoanDate { get; set; } = DateTime.UtcNow;
+        public DateTime? ReturnDate { get; set; }
     }
 }
