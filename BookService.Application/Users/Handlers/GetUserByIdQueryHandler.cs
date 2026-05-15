@@ -1,5 +1,6 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Users.Queries;
+using Mapster;
 using MediatR;
 
 namespace BookService.Application.Users.Handlers
@@ -19,12 +20,7 @@ namespace BookService.Application.Users.Handlers
 
             if (user == null) return null;
 
-            return new UserResponseDTO
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email
-            };
+            return user.Adapt<UserResponseDTO>();
         }
     }
 }

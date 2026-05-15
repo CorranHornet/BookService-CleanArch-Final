@@ -1,5 +1,6 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Users.Queries;
+using Mapster;
 using MediatR;
 
 namespace BookService.Application.Users.Handlers
@@ -17,12 +18,7 @@ namespace BookService.Application.Users.Handlers
         {
             var users = await _repo.GetAllAsync();
 
-            return users.Select(u => new UserResponseDTO
-            {
-                Id = u.Id,
-                Username = u.Username,
-                Email = u.Email
-            }).ToList();
+            return users.Adapt<List<UserResponseDTO>>();
         }
     }
 }

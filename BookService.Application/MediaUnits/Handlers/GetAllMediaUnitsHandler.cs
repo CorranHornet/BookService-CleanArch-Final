@@ -3,6 +3,7 @@ using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
 using BookService.Application.MediaUnits.Queries;
 using BookService.Domain.Entities;
+using Mapster;
 
 namespace BookService.Application.MediaUnits.Handlers;
 
@@ -14,12 +15,8 @@ public class GetAllMediaUnitsHandler : IRequestHandler<GetAllMediaUnitsQuery, IE
     public async Task<IEnumerable<MediaUnitResponseDTO>> Handle(GetAllMediaUnitsQuery request, CancellationToken ct)
     {
         var units = await _repo.GetAll();
-        return units.Select(mu => new MediaUnitResponseDTO {
-            Id = mu.Id,
-            Title = mu.Title,
-            Number = mu.Number,
-            MediaItemId = mu.MediaItemId,
-            UnitType = mu is PhysicalBookUnit ? "Book" : "Audiobook"
-        });
+
+        // 2. Map the collection to an IEnumerable of the DTO
+        return units.Adapt<IEnumerable<MediaUnitResponseDTO>>();
     }
 }

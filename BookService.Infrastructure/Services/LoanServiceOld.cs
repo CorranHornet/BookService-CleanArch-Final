@@ -3,6 +3,7 @@ using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Mapster;
 
 namespace BookService.Infrastructure.Services.TST
 {
@@ -33,13 +34,11 @@ namespace BookService.Infrastructure.Services.TST
             if (isAlreadyLoaned)
                 return false;
 
-            var loan = new Loan
-            {
-                UserId = userId,
-                MediaUnitId = mediaUnitId,
-                LoanDate = DateTime.UtcNow,
-                ReturnDate = null
-            };
+            // 2. Map structural values using standard mapping consistency
+
+            var loan = new { UserId = userId, MediaUnitId = mediaUnitId }.Adapt<Loan>();
+            loan.LoanDate = DateTime.UtcNow;
+            loan.ReturnDate = null;
 
             _context.Loans.Add(loan);
             await _context.SaveChangesAsync();
@@ -69,30 +68,11 @@ namespace BookService.Infrastructure.Services.TST
         // -------------------------
         public async Task<IEnumerable<LoanResponseDTO>> GetAllAsync()
         {
+            // 3. ProjectToType tells Entity Framework to only pull the specific columns 
+            // required by LoanResponseDTO, UserDTO, and MediaUnitDTO out of the SQL Database.
+            // Notice you no longer even need the .Include() statements, Mapster builds the joins for you!
             return await _context.Loans
-                .Include(l => l.User)
-                .Include(l => l.MediaUnit)
-                .Select(l => new LoanResponseDTO
-                {
-                    Id = l.Id,
-                    LoanDate = l.LoanDate,
-                    ReturnDate = l.ReturnDate,
-
-                    User = new UserDTO
-                    {
-                        Id = l.User.Id,
-                        Username = l.User.Username,
-                        Email = l.User.Email
-                    },
-
-                    MediaUnit = new MediaUnitDTO
-                    {
-                        Id = l.MediaUnit.Id,
-                        Title = l.MediaUnit.Title,
-                        Number = l.MediaUnit.Number,
-                        MediaItemId = l.MediaUnit.MediaItemId
-                    }
-                })
+                .ProjectToType<LoanResponseDTO>()
                 .ToListAsync();
         }
     }

@@ -4,6 +4,7 @@ using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mapster;
 
 
 namespace BookService.Api.Controllers
@@ -29,12 +30,8 @@ namespace BookService.Api.Controllers
             if (user == null)
                 return BadRequest("Username already exists or invalid input.");
 
-            return Ok(new
-            {
-                user.Id,
-                user.Username,
-                user.Role
-            });
+            // 2. Use Mapster to create a clean UserDTO instead of an anonymous object
+            return Ok(user.Adapt<UserDTO>());
         }
 
         [HttpPost("Login")]
@@ -46,12 +43,11 @@ namespace BookService.Api.Controllers
 
             var user = await _authService.GetUserByUsernameAsync(request.Username);
 
-            return Ok(new LoginResponseDTO
-            {
-                Token = token,
-                Username = user.Username,
-                Role = user.Role
-            });
+            // 3. Map the User entity to LoginResponseDTO, then assign the Token field
+            var response = user.Adapt<LoginResponseDTO>();
+            response.Token = token;
+
+            return Ok(response);
         }
 
         [Authorize]

@@ -2,6 +2,7 @@
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Repositories;
+using Mapster;
 
 namespace BookService.Infrastructure.Services
 {
@@ -17,7 +18,7 @@ namespace BookService.Infrastructure.Services
         public async Task<IEnumerable<MediaUnitResponseDTO>> GetAllAsync()
         {
             var units = await _repo.GetAll();
-            return units.Select(MapToResponseDTO);
+            return units.Adapt<IEnumerable<MediaUnitResponseDTO>>();
         }
 
         public async Task<MediaUnitResponseDTO?> GetByIdAsync(int id)
@@ -25,7 +26,8 @@ namespace BookService.Infrastructure.Services
             var mu = await _repo.GetById(id);
             if (mu == null) return null;
 
-            return MapToResponseDTO(mu);
+            // 1. Replaced the manual MapToResponseDTO method call
+            return mu.Adapt<MediaUnitResponseDTO>();
         }
 
         public async Task<MediaUnitResponseDTO> CreateAsync(MediaUnitCreateDTO dto)
@@ -36,6 +38,9 @@ namespace BookService.Infrastructure.Services
             MediaUnit entity;
 
             // Decide which concrete class to create based on the DTO
+
+            // 2. We keep the concrete selection logic because it's database creation logic,
+            // but we use Mapster to populate all matching fields into the newly chosen concrete entity instantly!
             if (dto.DurationMinutes.HasValue && dto.DurationMinutes.Value > 0)
             {
                 entity = new AudiobookUnit 
@@ -51,15 +56,12 @@ namespace BookService.Infrastructure.Services
                     PageCount = dto.PageCount ?? 0 
                 };
             }
-
-            entity.Title = dto.Title ?? string.Empty;
-            entity.Number = dto.Number;
-            entity.MediaItemId = dto.MediaItemId;
-
+            
             await _repo.Add(entity);
             await _repo.Save();
 
-            return MapToResponseDTO(entity);
+            // 3. Replaced manual MapToResponseDTO block
+            return entity.Adapt<MediaUnitResponseDTO>();
         }
 
         public async Task<bool> UpdateAsync(int id, MediaUnitUpdateDTO dto)
@@ -107,32 +109,7 @@ namespace BookService.Infrastructure.Services
             return !hasActiveLoan;
         }
 
-        /// <summary>
-        /// Maps the abstract MediaUnit to a flat DTO for the API response.
-        /// </summary>
-        private MediaUnitResponseDTO MapToResponseDTO(MediaUnit mu)
-        {
-            var dto = new MediaUnitResponseDTO
-            {
-                Id = mu.Id,
-                Title = mu.Title,
-                Number = mu.Number,
-                MediaItemId = mu.MediaItemId
-            };
-
-            // Identify type and extract specific data
-            if (mu is PhysicalBookUnit book)
-            {
-                dto.PageCount = book.PageCount;
-                dto.UnitType = "Book";
-            }
-            else if (mu is AudiobookUnit audio)
-            {
-                dto.DurationMinutes = audio.DurationMinutes;
-                dto.UnitType = "Audiobook";
-            }
-
-            return dto;
-        }
+        
+        
     }
 }

@@ -3,6 +3,7 @@ using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using BookService.Application.MediaUnits.Commands;
+using Mapster;
 
 namespace BookService.Application.MediaUnits.Handlers;
 
@@ -36,13 +37,6 @@ public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, Me
         await _repo.Add(entity);
         await _repo.Save();
 
-        return new MediaUnitResponseDTO
-        {
-            Id = entity.Id,
-            Title = entity.Title,
-            Number = entity.Number,
-            MediaItemId = entity.MediaItemId,
-            UnitType = entity is PhysicalBookUnit ? "Book" : "Audiobook"
-        };
+        return entity.Adapt<MediaUnitResponseDTO>();
     }
 }

@@ -2,6 +2,7 @@
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Repositories;
+using Mapster;
 
 namespace BookService.Infrastructure.Services
 {
@@ -18,11 +19,8 @@ namespace BookService.Infrastructure.Services
         {
             var genres = await _repo.GetAll();
 
-            return genres.Select(g => new GenreResponseDTO
-            {
-                Id = g.Id,
-                Name = g.Name
-            }).ToList();
+            // 2. Used Collection Pattern: List<TargetDTO>
+            return genres.Adapt<List<GenreResponseDTO>>();
         }
 
         public async Task<GenreResponseDTO?> GetGenreByIdAsync(int id)
@@ -30,28 +28,19 @@ namespace BookService.Infrastructure.Services
             var genre = await _repo.GetById(id);
             if (genre == null) return null;
 
-            return new GenreResponseDTO
-            {
-                Id = genre.Id,
-                Name = genre.Name
-            };
+            // 3. Used Single Item Pattern
+            return genre.Adapt<GenreResponseDTO>();
         }
 
         public async Task<GenreResponseDTO> CreateGenreAsync(GenreCreateDTO dto)
         {
-            var genre = new Genre
-            {
-                Name = dto.Name
-            };
-
+            // 4. Used Mapster to convert incoming DTO to Entity
+            var genre = dto.Adapt<Genre>();
+            
             await _repo.Add(genre);
             await _repo.Save();
 
-            return new GenreResponseDTO
-            {
-                Id = genre.Id,
-                Name = genre.Name
-            };
+            return genre.Adapt<GenreResponseDTO>();
         }
 
         public async Task<bool> DeleteGenreAsync(int genreId)

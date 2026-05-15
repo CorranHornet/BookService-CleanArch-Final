@@ -5,6 +5,7 @@ using BookService.Domain.Entities;
 
 
 using Microsoft.EntityFrameworkCore;
+using Mapster;
 
 namespace BookService.Infrastructure.Services
 {
@@ -19,48 +20,33 @@ namespace BookService.Infrastructure.Services
 
         public async Task<IEnumerable<UserResponseDTO>> GetAllAsync()
         {
+            // 2. Used ProjectToType to automatically build the clean SQL SELECT statement
             return await _context.Users
-                .Select(u => new UserResponseDTO
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    Email = u.Email
-                })
+                .ProjectToType<UserResponseDTO>()
                 .ToListAsync();
+                
         }
 
         public async Task<UserResponseDTO?> GetByIdAsync(int id)
         {
+            // 3. Cleaned up the manual projection loop block
             return await _context.Users
                 .Where(u => u.Id == id)
-                .Select(u => new UserResponseDTO
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    Email = u.Email
-                })
+                .ProjectToType<UserResponseDTO>()
                 .FirstOrDefaultAsync();
         }
 
         public async Task<UserResponseDTO> CreateAsync(UserCreateDTO dto)
         {
-            var user = new User
-            {
-                Username = dto.Username,
-                Email = dto.Email,
-                PasswordHash = "", // TEMP for now
-                Role = "User"
-            };
-
+            // 4. Mapster instantiates the entity and pulls the class defaults 
+            // (PasswordHash = string.Empty and Role = "User") automatically!
+            var user = dto.Adapt<User>();
+            
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return new UserResponseDTO
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email
-            };
+            // 5. Converts tracked entity back to the presentation DTO
+            return user.Adapt<UserResponseDTO>();
         }
 
         public async Task<bool> DeleteAsync(int id)

@@ -2,12 +2,8 @@
 using BookService.Application.Genres.Commands;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
+using Mapster;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BookService.Application.Genres.Handlers
 {
@@ -22,19 +18,14 @@ namespace BookService.Application.Genres.Handlers
 
         public async Task<GenreResponseDTO> Handle(CreateGenreCommand request, CancellationToken ct)
         {
-            var genre = new Genre
-            {
-                Name = request.Name
-            };
+            // Map Command -> Entity
+            var genre = request.Adapt<Genre>();
 
             await _repo.Add(genre);
             await _repo.Save();
 
-            return new GenreResponseDTO
-            {
-                Id = genre.Id,
-                Name = genre.Name
-            };
+            return genre.Adapt<GenreResponseDTO>();
+            
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Domain.Entities;
+using Mapster;
 using MediatR;
 
 namespace BookService.Application.MediaItems.Commands
@@ -26,42 +27,16 @@ namespace BookService.Application.MediaItems.Commands
             if (genre == null)
                 throw new ArgumentException("Invalid GenreId");
 
-            var entity = new MediaItem
-            {
-                Title = request.Title,
-                GenreId = request.GenreId,
-                Description = request.Description,
-                Creator = request.Creator,
-                ReleaseDate = request.ReleaseDate,
-                ScheduledDate = request.ScheduledDate,
-                PageCount = request.PageCount,
-                DurationMinutes = request.DurationMinutes,
-                TrackCount = request.TrackCount,
-                Publisher = request.Publisher,
-                Language = request.Language,
-                MediaType = request.MediaType
-            };
+            // 2. Use Mapster to map Command -> Entity automatically
+            var entity = request.Adapt<MediaItem>();
 
             await _repo.Add(entity);
             await _repo.Save();
 
-            return new MediaItemResponseDTO
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                GenreId = entity.GenreId,
-                Genre = genre.Name,
-                Description = entity.Description,
-                Creator = entity.Creator,
-                ReleaseDate = entity.ReleaseDate,
-                ScheduledDate = entity.ScheduledDate,
-                PageCount = entity.PageCount,
-                DurationMinutes = entity.DurationMinutes,
-                TrackCount = entity.TrackCount,
-                Publisher = entity.Publisher,
-                Language = entity.Language,
-                MediaType = entity.MediaType
-            };
+            // 3. Use Mapster to handle Entity -> DTO. 
+            // Because we need the Genre Name string populated, Mapster will look 
+            // at the custom rule we add to MapsterConfig.cs to pull it off the 'genre' object.
+            return entity.Adapt<MediaItemResponseDTO>();
         }
     }
 }

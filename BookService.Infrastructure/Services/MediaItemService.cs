@@ -1,6 +1,8 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
+using Mapster;
+using Microsoft.AspNetCore.SignalR.Protocol;
 
 public class MediaItemService : IMediaItemService
 {
@@ -15,25 +17,7 @@ public class MediaItemService : IMediaItemService
     {
         var items = await _repo.GetAll(search);
 
-        return items.Select(t => new MediaItemResponseDTO
-        {
-            Id = t.Id,
-            Title = t.Title,
-            Description = t.Description,
-
-            GenreId = t.GenreId,
-            Genre = t.Genre.Name,
-
-            Creator = t.Creator,
-            ReleaseDate = t.ReleaseDate,
-            ScheduledDate = t.ScheduledDate,
-            PageCount = t.PageCount,
-            DurationMinutes = t.DurationMinutes,
-            TrackCount = t.TrackCount,
-            Publisher = t.Publisher,
-            Language = t.Language,
-            MediaType = t.MediaType
-        });
+        return items.Adapt<IEnumerable<MediaItemResponseDTO>>();
     }
 
     public async Task<MediaItemResponseDTO?> GetByIdAsync(int id)
@@ -41,23 +25,7 @@ public class MediaItemService : IMediaItemService
         var t = await _repo.GetById(id);
         if (t == null) return null;
 
-        return new MediaItemResponseDTO
-        {
-            Id = t.Id,
-            Title = t.Title,
-            Description = t.Description,
-            GenreId = t.GenreId,
-            Genre = t.Genre.Name,
-            Creator = t.Creator,
-            ReleaseDate = t.ReleaseDate,
-            ScheduledDate = t.ScheduledDate,
-            PageCount = t.PageCount,
-            DurationMinutes = t.DurationMinutes,
-            TrackCount = t.TrackCount,
-            Publisher = t.Publisher,
-            Language = t.Language,
-            MediaType = t.MediaType
-        };
+        return t.Adapt<MediaItemResponseDTO>();
     }
 
     public async Task<MediaItemResponseDTO> CreateAsync(MediaItemCreateDTO dto)
@@ -69,42 +37,16 @@ public class MediaItemService : IMediaItemService
         if (genre == null)
             throw new ArgumentException("Invalid GenreId");
 
-        var mediaItem = new MediaItem
-        {
-            Title = dto.Title,
-            Description = dto.Description,
-            Creator = dto.Creator,
-            ReleaseDate = dto.ReleaseDate,
-            ScheduledDate = dto.ScheduledDate,
-            PageCount = dto.PageCount,
-            DurationMinutes = dto.DurationMinutes,
-            TrackCount = dto.TrackCount,
-            Publisher = dto.Publisher,
-            Language = dto.Language,
-            MediaType = dto.MediaType,
-            GenreId = genre.Id
-        };
+        // 1. Mapster handles the massive property copy block instantly
+        var mediaItem = dto.Adapt<MediaItem>();
+        mediaItem.GenreId = genre.Id;// Safeguard the verified GenreId
 
         await _repo.Add(mediaItem);
         await _repo.Save();
 
-        return new MediaItemResponseDTO
-        {
-            Id = mediaItem.Id,
-            Title = mediaItem.Title,
-            GenreId = mediaItem.GenreId,
-            Genre = genre.Name,
-            Description = mediaItem.Description,
-            Creator = mediaItem.Creator,
-            ReleaseDate = mediaItem.ReleaseDate,
-            ScheduledDate = mediaItem.ScheduledDate,
-            PageCount = mediaItem.PageCount,
-            DurationMinutes = mediaItem.DurationMinutes,
-            TrackCount = mediaItem.TrackCount,
-            Publisher = mediaItem.Publisher,
-            Language = mediaItem.Language,
-            MediaType = mediaItem.MediaType
-        };
+        // 2. Map the tracked entity back to your Response DTO
+        // Mapster's flattening handles mapping genre.Name to Response.Genre automatically!
+        return mediaItem.Adapt<MediaItemResponseDTO>();
     }
 
     public async Task<bool> UpdateAsync(int id, MediaItemUpdateDTO dto)

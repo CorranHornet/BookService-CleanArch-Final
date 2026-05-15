@@ -1,6 +1,7 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
+using Mapster;
 
 public class LoanService : ILoanService
 {
@@ -17,13 +18,13 @@ public class LoanService : ILoanService
         if (!await _repo.MediaUnitExists(mediaUnitId)) return false;
         if (await _repo.IsAlreadyLoaned(mediaUnitId)) return false;
 
-        var loan = new Loan
-        {
-            UserId = userId,
-            MediaUnitId = mediaUnitId,
-            LoanDate = DateTime.UtcNow
-        };
+        // 2. We can use Mapster to create the initial tracking state if desired, 
+        // but since it's just plain IDs from parameters, using Mapster's dynamic parameter mapping 
+        // or a simple object initialization keeps it readable. Let's use Mapster to stay consistent!
 
+        var loan = new { UserId = userId, MediaUnitId = mediaUnitId }.Adapt<Loan>();
+        loan.LoanDate = DateTime.UtcNow; // Set our tracking timestamp
+        
         await _repo.AddLoan(loan);
         await _repo.SaveChanges();
 
@@ -46,26 +47,9 @@ public class LoanService : ILoanService
     {
         var loans = await _repo.GetAllWithIncludes();
 
-        return loans.Select(l => new LoanResponseDTO
-        {
-            Id = l.Id,
-            LoanDate = l.LoanDate,
-            ReturnDate = l.ReturnDate,
 
-            User = new UserDTO
-            {
-                Id = l.User.Id,
-                Username = l.User.Username,
-                Email = l.User.Email
-            },
-
-            MediaUnit = new MediaUnitDTO
-            {
-                Id = l.MediaUnit.Id,
-                Title = l.MediaUnit.Title,
-                Number = l.MediaUnit.Number,
-                MediaItemId = l.MediaUnit.MediaItemId
-            }
-        });
+        // 3. Collection Pattern: Mapster automatically travels down into the nested 
+        // User and MediaUnit navigation properties and converts them into UserDTO and MediaUnitDTO!
+        return loans.Adapt<IEnumerable<LoanResponseDTO>>();
     }
 }
