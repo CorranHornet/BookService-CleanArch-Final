@@ -17,15 +17,7 @@ namespace BookService.Infrastructure.Services
         public async Task<IEnumerable<MediaUnitResponseDTO>> GetAllAsync()
         {
             var units = await _repo.GetAll();
-
-            return units.Select(mu => new MediaUnitResponseDTO
-            {
-                Id = mu.Id,
-                Title = mu.Title,
-                Number = mu.Number,
-                DurationMinutes = mu.DurationMinutes,
-                MediaItemId = mu.MediaItemId
-            });
+            return units.Select(MapToResponseDTO);
         }
 
         public async Task<MediaUnitResponseDTO?> GetByIdAsync(int id)
@@ -33,14 +25,7 @@ namespace BookService.Infrastructure.Services
             var mu = await _repo.GetById(id);
             if (mu == null) return null;
 
-            return new MediaUnitResponseDTO
-            {
-                Id = mu.Id,
-                Title = mu.Title,
-                Number = mu.Number,
-                DurationMinutes = mu.DurationMinutes,
-                MediaItemId = mu.MediaItemId
-            };
+            return MapToResponseDTO(mu);
         }
 
         public async Task<MediaUnitResponseDTO> CreateAsync(MediaUnitCreateDTO dto)
@@ -48,25 +33,33 @@ namespace BookService.Infrastructure.Services
             if (!await _repo.MediaItemExists(dto.MediaItemId))
                 throw new Exception("MediaItem not found");
 
-            var entity = new MediaUnit
+            MediaUnit entity;
+
+            // Decide which concrete class to create based on the DTO
+            if (dto.DurationMinutes.HasValue && dto.DurationMinutes.Value > 0)
             {
-                Title = dto.Title,
-                Number = dto.Number,
-                DurationMinutes = dto.DurationMinutes,
-                MediaItemId = dto.MediaItemId
-            };
+                entity = new AudiobookUnit 
+                { 
+                    DurationMinutes = dto.DurationMinutes.Value 
+                };
+            }
+            else
+            {
+                entity = new PhysicalBookUnit 
+                { 
+                    // Fixes CS0266: Provide 0 if PageCount is null
+                    PageCount = dto.PageCount ?? 0 
+                };
+            }
+
+            entity.Title = dto.Title ?? string.Empty;
+            entity.Number = dto.Number;
+            entity.MediaItemId = dto.MediaItemId;
 
             await _repo.Add(entity);
             await _repo.Save();
 
-            return new MediaUnitResponseDTO
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                Number = entity.Number,
-                DurationMinutes = entity.DurationMinutes,
-                MediaItemId = entity.MediaItemId
-            };
+            return MapToResponseDTO(entity);
         }
 
         public async Task<bool> UpdateAsync(int id, MediaUnitUpdateDTO dto)
@@ -74,14 +67,21 @@ namespace BookService.Infrastructure.Services
             var entity = await _repo.GetById(id);
             if (entity == null) return false;
 
+            // Update common fields
             if (!string.IsNullOrWhiteSpace(dto.Title))
                 entity.Title = dto.Title;
 
-            if (dto.Number.HasValue)
-                entity.Number = dto.Number;
+            entity.Number = dto.Number ?? entity.Number;
 
-            if (dto.DurationMinutes.HasValue)
-                entity.DurationMinutes = dto.DurationMinutes.Value;
+            // Fixes CS0266: Pattern match to safe-cast to the correct subtype
+            if (entity is PhysicalBookUnit book && dto.PageCount.HasValue)
+            {
+                book.PageCount = dto.PageCount.Value;
+            }
+            else if (entity is AudiobookUnit audio && dto.DurationMinutes.HasValue)
+            {
+                audio.DurationMinutes = dto.DurationMinutes.Value;
+            }
 
             await _repo.Save();
             return true;
@@ -101,8 +101,38 @@ namespace BookService.Infrastructure.Services
             return true;
         }
 
-        public Task<bool> IsAvailableAsync(int mediaUnitId)
-            => _repo.HasActiveLoan(mediaUnitId)
-                .ContinueWith(t => !t.Result);
+        public async Task<bool> IsAvailableAsync(int mediaUnitId)
+        {
+            var hasActiveLoan = await _repo.HasActiveLoan(mediaUnitId);
+            return !hasActiveLoan;
+        }
+
+        /// <summary>
+        /// Maps the abstract MediaUnit to a flat DTO for the API response.
+        /// </summary>
+        private MediaUnitResponseDTO MapToResponseDTO(MediaUnit mu)
+        {
+            var dto = new MediaUnitResponseDTO
+            {
+                Id = mu.Id,
+                Title = mu.Title,
+                Number = mu.Number,
+                MediaItemId = mu.MediaItemId
+            };
+
+            // Identify type and extract specific data
+            if (mu is PhysicalBookUnit book)
+            {
+                dto.PageCount = book.PageCount;
+                dto.UnitType = "Book";
+            }
+            else if (mu is AudiobookUnit audio)
+            {
+                dto.DurationMinutes = audio.DurationMinutes;
+                dto.UnitType = "Audiobook";
+            }
+
+            return dto;
+        }
     }
 }

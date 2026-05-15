@@ -7,6 +7,7 @@ namespace BookService.Application.DTOs
     {
         public string? Title { get; set; }
         public int? Number { get; set; }
+        public int? PageCount { get; set; }
         public int? DurationMinutes { get; set; }
     }
 }

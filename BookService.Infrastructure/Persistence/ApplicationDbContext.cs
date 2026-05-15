@@ -20,6 +20,12 @@ namespace BookService.Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
+            // Inheritance configuration for MediaUnits
+            modelBuilder.Entity<MediaUnit>()
+                .HasDiscriminator<string>("MediaType")
+                .HasValue<PhysicalBookUnit>("Book")
+                .HasValue<AudiobookUnit>("Audiobook");
+
             // User -> Loans (Restrict Delete)
             modelBuilder.Entity<Loan>()
                 .HasOne(l => l.User)
