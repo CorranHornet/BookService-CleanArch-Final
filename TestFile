@@ -1,0 +1,55 @@
+using System.Transactions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.Testing;
+using BookService.Application.Interfaces;
+using BookService.Application.DTOs;
+using Xunit;
+
+namespace BookService.Tests;
+
+public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public MediaUnitIntegrationTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task CreateMediaUnit_ShouldRollback_LeavingDatabaseClean()
+    {
+        // ARRANGE
+        // This is the 'Undo' wrapper. 
+        // AsyncFlowOption.Enabled is critical for async database calls.
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+        using var serviceScope = _factory.Services.CreateScope();
+        var service = serviceScope.ServiceProvider.GetRequiredService<IMediaUnitService>();
+
+        // SEED: Create a parent MediaItem so we don't hit Foreign Key errors
+        var parentItem = new MediaItem { Title = "Test Base Item", Description = "Testing Foundation" };
+        db.MediaItems.Add(parentItem);
+        await db.SaveChangesAsync();
+        var parentId = parentItem.Id;
+
+        var dto = new MediaUnitCreateDTO 
+        { 
+            Title = "xUnit Sandbox Test", 
+            MediaItemId = 1, // Ensure an ID that exists or handle appropriately
+            DurationMinutes = 90 
+        };
+
+        // ACT
+        var result = await service.CreateAsync(dto);
+
+        // ASSERT
+        Assert.NotNull(result);
+        Assert.Equal("Audiobook", result.UnitType);
+
+        // CLEANUP:
+        // We do NOT call scope.Complete(). 
+        // When the code hits this closing brace, the transaction is abandoned 
+        // and SQL Server deletes the 'junk' automatically.
+    }
+}
