@@ -1,19 +1,14 @@
-﻿using BookService.Application.DTOs;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using BookService.Infrastructure.Services;
-using BookService.Application.Interfaces;
-using BookService.Infrastructure.Services;
-using BookService.Application.Users.Queries;
-using BookService.Application.Users.Handlers;
-using BookService.Application.Users.Commands;
+﻿using BookService.Application.Genres.Commands;
 using BookService.Application.Genres.Queries;
-using BookService.Application.Genres.Commands;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace BookService.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Authorize]
+    [Route("api/genres")]
     [ApiController]
     public class GenreController : ControllerBase
     {
@@ -30,7 +25,7 @@ namespace BookService.Api.Controllers
 
         => Ok(await _mediator.Send(new GetGenresQuery()));
 
-        [HttpGet("id")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
             => Ok(await _mediator.Send(new GetGenreByIdQuery(id)));
 

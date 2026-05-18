@@ -1,5 +1,4 @@
 ﻿using BookService.Application.DTOs;
-using BookService.Infrastructure.Services;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +22,7 @@ namespace BookService.Api.Controllers
 
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ActionResult<User>> Register(LoginRequestDTO request)
         {
             var user = await _authService.RegisterAsync(request);
@@ -35,6 +35,7 @@ namespace BookService.Api.Controllers
         }
 
         [HttpPost("Login")]
+        [AllowAnonymous]
         public async Task<ActionResult<string>> Login(LoginRequestDTO request)
         {
             var token = await _authService.LoginAsync(request);
