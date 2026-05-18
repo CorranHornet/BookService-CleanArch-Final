@@ -6,7 +6,6 @@ using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
 using BookService.Infrastructure.Persistence;
 using BookService.Infrastructure.Repositories;
-using BookService.Infrastructure.Services;
 using Mapster;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
@@ -83,7 +82,6 @@ else
 // ======================================================
 builder.Services.AddScoped<IMediaItemRepository, MediaItemRepository>();
 builder.Services.AddScoped<IMediaUnitRepository, MediaUnitRepository>();
-builder.Services.AddScoped<IMediaUnitService, MediaUnitService>();
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();

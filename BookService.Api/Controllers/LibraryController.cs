@@ -1,38 +1,61 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
+using BookService.Application.Loans.Commands;
+using BookService.Application.MediaItems.Queries;
+using BookService.Application.MediaUnits.Handlers;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace BookService.Api.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class LibraryController(IMediaItemService itemService, ILoanService loanService) : ControllerBase
-    {
-        // Hämta alla böcker - Publikt
-        [HttpGet("books")]
-        public async Task<IActionResult> GetAllBooks() => Ok(await itemService.GetAllAsync());
+[ApiController]
+[Route("api/[controller]")]
+public class LibraryController : ControllerBase
+{
+    private readonly IMediator _mediator;
 
-        // Lägg till bok - ENDAST ADMIN
-        [Authorize(Roles = "Admin")]
-        [HttpPost("books")]
-        public async Task<IActionResult> AddBook(MediaItemCreateDTO dto)
+     public LibraryController(IMediator mediator)
         {
-            var result = await itemService.CreateAsync(dto);
-            return Ok(result);
+            _mediator = mediator;
         }
 
-        // Låna en bok - INLOGGAD ANVÄNDARE
-        [Authorize]
-        [HttpPost("borrow/{unitId}")]
-        public async Task<IActionResult> Borrow(int unitId)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+    // GET: books (public)
+    [HttpGet("books")]
+    public async Task<IActionResult> GetAllBooks(string? search)
+    {
+            var result = await _mediator.Send(new GetAllMediaItemsQuery(search));
+            return Ok(result);
+    }
 
-            var success = await loanService.BorrowAsync(int.Parse(userId), unitId);
-            return success ? Ok("Boken lånad.") : BadRequest("Boken är inte tillgänglig.");
+    // POST: books (admin)
+    [Authorize(Roles = "Admin")]
+    [HttpPost("books")]
+    public async Task<IActionResult> AddBook(MediaItemCreateDTO command)
+    {
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+
+
+
+    // Borrow book (authenticated user
+    [Authorize]
+    [HttpPost("borrow/{unitId}")]
+    public async Task<IActionResult> Borrow(int unitId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+            return Unauthorized();
+
+            var result = await _mediator.Send(new CreateLoanCommand
+            {
+                UserId = int.Parse(userId),
+                MediaUnitId = unitId
+            });
+            return Ok(result);
         }
     }
 }
