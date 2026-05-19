@@ -26,17 +26,21 @@ public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, Me
         if (!await _repo.MediaItemExists(request.MediaItemId))
             return null;
 
-        MediaUnit entity = (request.DurationMinutes.HasValue && request.DurationMinutes.Value > 0)
-            ? new AudiobookUnit { DurationMinutes = request.DurationMinutes.Value }
-            : new PhysicalBookUnit { PageCount = request.PageCount ?? 0 };
+        // Mapster handles basic mapping (NO manual property assignment)
+        var entity = request.Adapt<MediaUnit>();
 
-        entity.Title = request.Title;
-        entity.Number = request.Number;
-        entity.MediaItemId = request.MediaItemId;
+        // Only branching logic allowed = domain decision, not mapping
+        if (request.DurationMinutes.HasValue && request.DurationMinutes > 0)
+            entity = new AudiobookUnit { DurationMinutes = request.DurationMinutes.Value };
+        else entity = new PhysicalBookUnit { PageCount = request.PageCount ?? 0 };
 
-        await _repo.Add(entity);
+        //Mapster again for shared Properties
+        request.Adapt(entity);
         await _repo.Save();
 
         return entity.Adapt<MediaUnitResponseDTO>();
     }
 }
+
+
+        

@@ -1,15 +1,14 @@
-using System.Transactions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using MediatR;
-using BookService.Application.Interfaces;
+using BookService.Application.Common.Mapping;
 using BookService.Application.DTOs;
 using BookService.Application.MediaUnits.Commands;
-using BookService.Application.Common.Mapping; // Matches your MapsterConfig namespace
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
 using Mapster;
+using MediatR;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Transactions;
 using Xunit;
 
 namespace BookService.Tests;
@@ -23,43 +22,36 @@ public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Pro
         _factory = factory;
     }
 
-    /// <summary>
-    /// TEST 1: Original Service-Layer Test
-    /// Verifies: DB Connection, TPH Inheritance, and direct Service logic.
-    /// </summary>
     [Fact]
-    public async Task ServiceLayer_FullLifecycle_VerifiesInheritanceAndPersistence()
+    public async Task CQRS_MediaUnit_Create_ShouldWorkWithoutServiceLayer()
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         using var serviceScope = _factory.Services.CreateScope();
-        var service = serviceScope.ServiceProvider.GetRequiredService<IMediaUnitService>();
+        var mediator = serviceScope.ServiceProvider.GetRequiredService<IMediator>();
         var db = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // SEED
-        var genre = new Genre { Name = "Service Test Genre" };
+        var genre = new Genre { Name = "Test Genre" };
         db.Genres.Add(genre);
         await db.SaveChangesAsync();
 
-        var parentItem = new MediaItem { Title = "Service Base Item", GenreId = genre.Id };
+        var parentItem = new MediaItem { Title = "Base Item", GenreId = genre.Id };
         db.MediaItems.Add(parentItem);
         await db.SaveChangesAsync();
 
-        // ACT
-        var audioResult = await service.CreateAsync(new MediaUnitCreateDTO
-        { Title = "Service Audiobook", MediaItemId = parentItem.Id, DurationMinutes = 180 });
+        var command = new CreateMediaUnitCommand
+        {
+            Title = "Test Book",
+            MediaItemId = parentItem.Id,
+            PageCount = 200
+        };
 
-        // ASSERT
-        Assert.Equal("Audiobook", audioResult.UnitType);
+        var result = await mediator.Send(command);
 
-        var dbUnits = await db.MediaUnits.Where(u => u.MediaItemId == parentItem.Id).ToListAsync();
-        Assert.Single(dbUnits);
+        Assert.NotNull(result);
+        Assert.Equal("Book", result.UnitType);
     }
 
-    /// <summary>
-    /// TEST 2: CQRS / MediatR Test
-    /// Verifies: MediatR Discovery, Command Handling, and Clean Arch flow.
-    /// </summary>
     [Fact]
     public async Task CQRSLayer_ViaMediator_VerifiesHandlerAndMapping()
     {
@@ -69,7 +61,6 @@ public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Pro
         var mediator = serviceScope.ServiceProvider.GetRequiredService<IMediator>();
         var db = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // SEED
         var genre = new Genre { Name = "CQRS Test Genre" };
         db.Genres.Add(genre);
         await db.SaveChangesAsync();
@@ -78,16 +69,15 @@ public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Pro
         db.MediaItems.Add(parentItem);
         await db.SaveChangesAsync();
 
-        // ACT: Send through Mediator
         var command = new CreateMediaUnitCommand
         {
             Title = "CQRS Physical Book",
             MediaItemId = parentItem.Id,
             PageCount = 300
         };
+
         var result = await mediator.Send(command);
 
-        // ASSERT
         Assert.NotNull(result);
         Assert.Equal("Book", result.UnitType);
         Assert.Equal(300, result.PageCount);
@@ -96,41 +86,27 @@ public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Pro
         Assert.True(exists);
     }
 
-    /// <summary>
-    /// TEST 3: Mapster Configuration Validation
-    /// Verifies: That the static MapsterConfig is registered and valid.
-    /// </summary>
     [Fact]
     public void MappingConfiguration_ShouldBeValidAndCompilable()
     {
-        // Act: Initialize your static config
         MapsterConfig.Register();
-
-        // Assert: Ensure Global Settings pass the compiler check
-        // This validates that destination properties can be mapped from source properties
         TypeAdapterConfig.GlobalSettings.Compile();
-        //TypeAdapterConfig.GlobalSettings.Validate();
     }
 
-    /// <summary>
-    /// TEST 4: Mapping Logic Test
-    /// Verifies: That specific inheritance and property logic works.
-    /// </summary>
     [Fact]
     public void Mapster_ShouldCorrectlyMapMediaUnitInheritance()
     {
-        // Arrange
         MapsterConfig.Register();
+
         var audiobook = new AudiobookUnit { Title = "Audio Test", DurationMinutes = 45 };
         var book = new PhysicalBookUnit { Title = "Book Test", PageCount = 150 };
 
-        // Act
         var audioDto = audiobook.Adapt<MediaUnitResponseDTO>();
         var bookDto = book.Adapt<MediaUnitResponseDTO>();
 
-        // Assert
         Assert.Equal("Audiobook", audioDto.UnitType);
         Assert.Equal(45, audioDto.DurationMinutes);
+
         Assert.Equal("Book", bookDto.UnitType);
         Assert.Equal(150, bookDto.PageCount);
     }

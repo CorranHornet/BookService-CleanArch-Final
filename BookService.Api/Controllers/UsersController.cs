@@ -1,7 +1,8 @@
-﻿using BookService.Application.DTOs;
+﻿
 using BookService.Application.Interfaces;
 using BookService.Application.Users.Commands;
 using BookService.Application.Users.Queries;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,26 +20,20 @@ namespace BookService.Api.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
-        {
-            var users = await _mediator.Send(new GetUsersQuery());
-            return Ok(users);
-        }
-
+            => Ok(await _mediator.Send(new GetUsersQuery()));
+            
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var user = await _mediator.Send(new GetUserByIdQuery(id));
-
-            if (user == null)
-                return NotFound();
-
-            return Ok(user);
+            return user == null ? NotFound() : Ok(user);
+            
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(UserCreateDTO dto)
+        public async Task<IActionResult> Create(CreateUserCommand command)
         {
-            var command = new CreateUserCommand(dto.Username, dto.Email);
+            
             var user = await _mediator.Send(command);
             return Ok(user);
         }
@@ -46,22 +41,10 @@ namespace BookService.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var result = await _mediator.Send(new DeleteUserCommand(id));
-
-                if (!result)
-                    return NotFound();
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    message = ex.Message,
-                });
-            }
+            var result = await _mediator.Send(new DeleteUserCommand(id));
+            return result ? NoContent() : NotFound();
+              
+            
         }
     }
 }
