@@ -8,8 +8,8 @@ namespace BookService.Application.DTOs
         public DateTime LoanDate { get; set; }
         public DateTime? ReturnDate { get; set; }
 
-        public UserDTO User { get; set; } = null;
-        public MediaUnitDTO MediaUnit { get; set; } = null;
+        public UserDTO? User { get; set; }
+        public MediaUnitDTO? MediaUnit { get; set; } 
     }
 
     public class UserDTO
