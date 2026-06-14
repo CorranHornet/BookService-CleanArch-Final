@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Mapster;
 using BookService.Application.DTOs;
 using BookService.Domain.Entities;
+using BookService.Application.MediaUnits.Commands;
+using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace BookService.Application.Common.Mapping
 {
@@ -27,6 +29,11 @@ namespace BookService.Application.Common.Mapping
 
             config.NewConfig<MediaUnit, MediaUnitDTO>();
 
+            config.NewConfig<CreateMediaUnitCommand, PhysicalBookUnit>()
+                .Map(dest => dest.PageCount, src => src.PageCount);
+
+            config.NewConfig<CreateMediaUnitCommand, AudiobookUnit>()
+               .Map(dest => dest.DurationMinutes, src =>src.DurationMinutes);
 
             // =========================================================
             // MediaUnit -> MediaUnitResponseDTO
