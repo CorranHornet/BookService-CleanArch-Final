@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Mapster;
+﻿using Mapster;
 using BookService.Application.DTOs;
 using BookService.Domain.Entities;
 using BookService.Application.MediaUnits.Commands;
-using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace BookService.Application.Common.Mapping
 {
@@ -18,6 +12,10 @@ namespace BookService.Application.Common.Mapping
             var config = TypeAdapterConfig.GlobalSettings;
 
             // Basic mappings
+            config.NewConfig<MediaItem, MediaItemResponseDTO>()
+                .Map(dest => dest.Genre, src => src.Genre != null ? src.Genre.Name : "")
+                .Map(dest => dest.GenreId, src => src.GenreId);
+
             config.NewConfig<User, UserDTO>();
 
             config.NewConfig<User, LoginResponseDTO>()
