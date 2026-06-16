@@ -1,6 +1,5 @@
 ﻿using BookService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace BookService.Application.Interfaces
 {
