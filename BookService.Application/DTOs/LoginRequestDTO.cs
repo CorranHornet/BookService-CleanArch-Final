@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization; // Glöm inte denna using!
-using BookService.Domain.Entities;
+﻿using System.Text.Json.Serialization;
 
 namespace BookService.Application.DTOs
 {

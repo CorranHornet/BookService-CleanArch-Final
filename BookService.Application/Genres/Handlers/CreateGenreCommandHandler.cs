@@ -2,30 +2,33 @@
 using BookService.Application.Genres.Commands;
 using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
-using Mapster;
+using MapsterMapper; 
 using MediatR;
 
 namespace BookService.Application.Genres.Handlers
 {
-    internal class CreateGenreCommandHandler : IRequestHandler<CreateGenreCommand, GenreResponseDTO>
+    public class CreateGenreCommandHandler : IRequestHandler<CreateGenreCommand, GenreResponseDTO>
     {
         private readonly IGenreRepository _repo;
+        private readonly IMapper _mapper; // Inject IMapper
 
-        public CreateGenreCommandHandler(IGenreRepository repo)
+        public CreateGenreCommandHandler(IGenreRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
         }
 
         public async Task<GenreResponseDTO> Handle(CreateGenreCommand request, CancellationToken ct)
         {
-            // Map Command -> Entity
-            var genre = request.Adapt<Genre>();
+            // 1. Map Command to Entity using IMapper
+            var genre = _mapper.Map<Genre>(request);
 
+            // 2. Save
             await _repo.Add(genre);
-            await _repo.Save();
+            await _repo.SaveChangesAsync();
 
-            return genre.Adapt<GenreResponseDTO>();
-            
+            // 3. Map Entity to DTO using IMapper
+            return _mapper.Map<GenreResponseDTO>(genre);
         }
     }
 }

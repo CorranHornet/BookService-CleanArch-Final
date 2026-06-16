@@ -35,7 +35,7 @@ namespace BookService.Infrastructure.Repositories
             return Task.CompletedTask;
         }
 
-        public Task Save()
+        public Task SaveChangesAsync()
             => _context.SaveChangesAsync();
     }
 }

@@ -1,6 +1,6 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Domain.Entities;
-using Mapster;
+using MapsterMapper;
 using MediatR;
 
 namespace BookService.Application.MediaItems.Commands
@@ -9,34 +9,28 @@ namespace BookService.Application.MediaItems.Commands
         : IRequestHandler<CreateMediaItemCommand, MediaItemResponseDTO>
     {
         private readonly IMediaItemRepository _repo;
+        private readonly IMapper _mapper;
 
-        public CreateMediaItemHandler(IMediaItemRepository repo)
+        public CreateMediaItemHandler(IMediaItemRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
         }
 
         public async Task<MediaItemResponseDTO> Handle(
             CreateMediaItemCommand request,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(request.Title))
-                throw new ArgumentException("Title is required");
+            // 1. Maps command to entity
+            var entity = _mapper.Map<MediaItem>(request);
 
-            var genre = await _repo.GetGenre(request.GenreId);
-
-            if (genre == null)
-                throw new ArgumentException("Invalid GenreId");
-
-            // 2. Use Mapster to map Command -> Entity automatically
-            var entity = request.Adapt<MediaItem>();
-
+            
+            // 2. Save in db (using repository)
             await _repo.Add(entity);
-            await _repo.Save();
+            await _repo.SaveChangesAsync();
 
-            // 3. Use Mapster to handle Entity -> DTO. 
-            // Because we need the Genre Name string populated, Mapster will look 
-            // at the custom rule we add to MapsterConfig.cs to pull it off the 'genre' object.
-            return entity.Adapt<MediaItemResponseDTO>();
+            // 3. Return DTO
+            return _mapper.Map<MediaItemResponseDTO>(entity);
         }
     }
 }

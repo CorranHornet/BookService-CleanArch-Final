@@ -1,31 +1,36 @@
 ﻿using BookService.Application.Loans.Commands;
+using BookService.Application.Interfaces;
+using MapsterMapper;
 using MediatR;
 
-namespace BookService.Application.Loans.Handlers
+namespace BookService.Application.Loans.Handlers;
+
+public class ReturnLoanCommandHandler : IRequestHandler<ReturnLoansCommand, bool>
 {
-    internal class ReturnLoanCommandHandler : IRequestHandler<ReturnLoansCommand, bool>
+    private readonly ILoanRepository _repo;
+    private readonly IMapper _mapper; 
+
+    public ReturnLoanCommandHandler(ILoanRepository repo, IMapper mapper)
     {
-        private readonly ILoanRepository _repo;
+        _repo = repo;
+        _mapper = mapper;
+    }
 
+    public async Task<bool> Handle(ReturnLoansCommand request, CancellationToken ct)
+    {
+        // 1. Fetch the existing entity
+        var loan = await _repo.GetById(request.LoanId);
 
-        public ReturnLoanCommandHandler(
-            ILoanRepository repo)
+        // 2. Validate
+        if (loan == null || loan.ReturnDate != null)
+            return false;
 
-        {
-            _repo = repo;
+        // 3. Update the domain entity
+        loan.ReturnDate = DateTime.UtcNow;
 
-        }
+        // 4. Persist changes using the consistent SaveChanges()
+        await _repo.SaveChangesAsync();
 
-        public async Task<bool> Handle(ReturnLoansCommand request, CancellationToken cancellationToken)
-        {
-            var loan = await _repo.GetById(request.LoanId);
-            if (loan == null || loan.ReturnDate != null)
-                return false;
-
-            loan.ReturnDate = DateTime.UtcNow;
-
-            await _repo.SaveChanges();
-            return true;
-        }
+        return true;
     }
 }

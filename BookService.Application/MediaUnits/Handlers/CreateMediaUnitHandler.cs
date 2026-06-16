@@ -1,42 +1,35 @@
-using MediatR;
-using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
-using BookService.Domain.Entities;
+using BookService.Application.Interfaces;
 using BookService.Application.MediaUnits.Commands;
-using Mapster;
+using BookService.Domain.Entities;
+using MapsterMapper;
+using MediatR;
 
 namespace BookService.Application.MediaUnits.Handlers;
 
-public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, MediaUnitResponseDTO?>
+public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, MediaUnitResponseDTO>
 {
     private readonly IMediaUnitRepository _repo;
+    private readonly IMapper _mapper;
 
-    public CreateMediaUnitHandler(IMediaUnitRepository repo)
+    public CreateMediaUnitHandler(IMediaUnitRepository repo, IMapper mapper)
     {
         _repo = repo;
+        _mapper = mapper;
     }
 
-    // The signature must match the interface exactly:
-    // 1. Must be 'public'
-    // 2. Return type: Task<MediaUnitResponseDTO?>
-    // 3. First param: CreateMediaUnitCommand
-    // 4. Second param: CancellationToken
-    public async Task<MediaUnitResponseDTO?> Handle(CreateMediaUnitCommand request, CancellationToken ct)
+    public async Task<MediaUnitResponseDTO> Handle(CreateMediaUnitCommand request, CancellationToken ct)
     {
-        if (!await _repo.MediaItemExists(request.MediaItemId))
-            return null;
-
+        // 1. Create entity based on input data(polymorphism)
         MediaUnit entity = (request.DurationMinutes.HasValue && request.DurationMinutes.Value > 0)
-            ? request.Adapt<AudiobookUnit>()
-            : request.Adapt<PhysicalBookUnit>();
+            ? _mapper.Map<AudiobookUnit>(request)
+            : _mapper.Map<PhysicalBookUnit>(request);
 
-        request.Adapt(entity);
-
+        // 2. Save
         await _repo.Add(entity);
-        await _repo.Save();
+        await _repo.SaveChangesAsync();
 
-        return entity.Adapt<MediaUnitResponseDTO>();
+        // 3. Return response
+        return _mapper.Map<MediaUnitResponseDTO>(entity);
     }
 }
-         
-        
