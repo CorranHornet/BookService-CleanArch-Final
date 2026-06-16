@@ -1,11 +1,10 @@
-﻿using BookService.Application.Loans.Commands;
+﻿using BookService.Application.Interfaces;
+using BookService.Application.Loans.Commands;
 using FluentValidation;
 
 namespace BookService.Application.Loans.Validators
 {
-
-
-public class CreateLoanCommandValidator : AbstractValidator<CreateLoanCommand>
+    public class CreateLoanCommandValidator : AbstractValidator<CreateLoanCommand>
     {
         private readonly ILoanRepository _repo;
 

@@ -1,6 +1,5 @@
 ﻿using BookService.Domain.Entities;
 
-
 namespace BookService.Application.Interfaces
 {
     public interface IGenreRepository
@@ -12,6 +11,6 @@ namespace BookService.Application.Interfaces
         Task Delete(Genre genre);
 
         Task<bool> HasMediaItems(int genreId);
-        Task Save();
+        Task SaveChangesAsync();
     }
 }

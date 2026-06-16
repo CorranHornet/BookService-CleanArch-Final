@@ -3,5 +3,9 @@ using MediatR;
 
 namespace BookService.Application.Users.Commands
 {
-    public record CreateUserCommand(string Username, string Email) : IRequest<UserResponseDTO>;
+    public class CreateUserCommand : IRequest<UserResponseDTO>
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
 }

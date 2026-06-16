@@ -1,4 +1,5 @@
 ﻿using BookService.Domain.Entities;
+
 namespace BookService.Application.Interfaces
 {
     public interface IMediaUnitRepository
@@ -12,6 +13,6 @@ namespace BookService.Application.Interfaces
         Task Add(MediaUnit entity);
         Task Delete(MediaUnit entity);
 
-        Task Save();
+        Task SaveChangesAsync();
     }
 }

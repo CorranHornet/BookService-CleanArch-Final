@@ -13,11 +13,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        //Console.WriteLine("VALIDATORS REGISTER START");
-        //services.AddValidatorsFromAssembly(typeof(CreateMediaItemCommandValidator).Assembly);
-        //Console.WriteLine("VALIDATORS REGISTER END");
-
-
         var assembly = Assembly.GetExecutingAssembly();
 
         // Register MediatR and Pipeline Behaviors
