@@ -3,23 +3,24 @@ using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookService.Infrastructure.Repositories;
-
-public class MediaRepository : IMediaRepository
+namespace BookService.Infrastructure.Repositories
 {
-    private readonly ApplicationDbContext _context;
-
-    public MediaRepository(ApplicationDbContext context)
+    public class MediaRepository : IMediaRepository
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _context;
 
-    public async Task<IEnumerable<MediaItem>> GetAllWithDetailsAsync()
-    {
-        // Real database call including your relationships
-        return await _context.MediaItems
-            .Include(m => m.Genre)
-            .Include(m => m.MediaUnits)
-            .ToListAsync();
+        public MediaRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<MediaItem>> GetAllWithDetailsAsync()
+        {
+            return await _context.MediaItems
+                .Include(m => m.Genre)
+                .Include(m => m.MediaUnits)
+                .ToListAsync();
+        }
     }
 }
+           
