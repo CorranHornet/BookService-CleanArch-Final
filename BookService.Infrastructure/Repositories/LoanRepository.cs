@@ -1,6 +1,5 @@
 ﻿using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
-using BookService.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookService.Infrastructure.Repositories
@@ -29,7 +28,7 @@ namespace BookService.Infrastructure.Repositories
         public Task<Loan?> GetById(int loanId)
             => _context.Loans.FirstOrDefaultAsync(l => l.Id == loanId);
 
-        public Task SaveChanges()
+        public Task SaveChangesAsync()
             => _context.SaveChangesAsync();
 
         public Task<List<Loan>> GetAllWithIncludes()
