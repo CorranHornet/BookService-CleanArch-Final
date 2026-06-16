@@ -1,11 +1,6 @@
 ﻿using BookService.Application.Genres.Commands;
 using BookService.Application.Interfaces;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BookService.Application.Genres.Handlers
 {
@@ -27,7 +22,7 @@ namespace BookService.Application.Genres.Handlers
                 return false;
 
             await _repo.Delete(genre);
-            await _repo.Save();
+            await _repo.SaveChangesAsync();
 
             return true;
         }

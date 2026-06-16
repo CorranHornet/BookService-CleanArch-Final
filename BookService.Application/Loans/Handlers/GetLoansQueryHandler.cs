@@ -2,6 +2,7 @@
 using BookService.Application.Loans.Commands;
 using BookService.Application.Loans.Queries;
 using Mapster;
+using MapsterMapper;
 using MediatR;
 
 namespace BookService.Application.Loans.Handlers
@@ -10,13 +11,15 @@ namespace BookService.Application.Loans.Handlers
         : IRequestHandler<GetLoansQuery, IEnumerable<LoanResponseDTO>>
     {
         private readonly ILoanRepository _repo;
+        private readonly IMapper _mapper;
 
 
         public GetLoansQueryHandler(
-            ILoanRepository repo)
+            ILoanRepository repo, IMapper mapper)
 
         {
             _repo = repo;
+            _mapper = mapper;
 
         }
 
@@ -25,7 +28,7 @@ public async Task<IEnumerable<LoanResponseDTO>> Handle(GetLoansQuery request, Ca
         {
             var loans = await _repo.GetAllWithIncludes();
 
-            return loans.Adapt<IEnumerable<LoanResponseDTO>>();
+            return _mapper.Map<IEnumerable<LoanResponseDTO>>(loans);
         }
     }
 }

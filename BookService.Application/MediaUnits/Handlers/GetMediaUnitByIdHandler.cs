@@ -2,21 +2,24 @@ using MediatR;
 using BookService.Application.Interfaces;
 using BookService.Application.DTOs;
 using BookService.Application.MediaUnits.Queries;
-using BookService.Domain.Entities;
-using Mapster;
+using MapsterMapper;
 
 namespace BookService.Application.MediaUnits.Handlers;
 
 public class GetMediaUnitByIdHandler : IRequestHandler<GetMediaUnitByIdQuery, MediaUnitResponseDTO?>
 {
     private readonly IMediaUnitRepository _repo;
-    public GetMediaUnitByIdHandler(IMediaUnitRepository repo) => _repo = repo;
-
+    private readonly IMapper _mapper;
+    public GetMediaUnitByIdHandler(IMediaUnitRepository repo, IMapper mapper)
+    {
+        _repo = repo;
+        _mapper = mapper;
+    }
     public async Task<MediaUnitResponseDTO?> Handle(GetMediaUnitByIdQuery request, CancellationToken ct)
     {
         var mu = await _repo.GetById(request.Id);
         if (mu == null) return null;
 
-        return mu.Adapt<MediaUnitResponseDTO>();
+        return _mapper.Map<MediaUnitResponseDTO>(mu);
     }
 }

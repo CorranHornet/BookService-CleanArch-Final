@@ -1,7 +1,7 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Users.Commands;
 using BookService.Domain.Entities;
-using Mapster;
+using MapsterMapper;
 using MediatR;
 
 namespace BookService.Application.Users.Handlers
@@ -9,27 +9,25 @@ namespace BookService.Application.Users.Handlers
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserResponseDTO>
     {
         private readonly IUserRepository _repo;
+        private readonly IMapper _mapper;
 
-        public CreateUserCommandHandler(IUserRepository repo)
+        public CreateUserCommandHandler(IUserRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
         }
 
         public async Task<UserResponseDTO> Handle(CreateUserCommand request, CancellationToken ct)
         {
-            // Mapster creates the User entity. 
-            // It runs the entity's defaults (Role = "User", PasswordHash = string.Empty)
-            // and then copies Username and Email from the request.
+            // Map command to domain entity
+            var user = _mapper.Map<User>(request);
 
-            // 1. Mapster creates the entity and maps input data
-            var user = request.Adapt<User>();
-            
+            // Save
             await _repo.AddAsync(user);
-            await _repo.SaveAsync();
+            await _repo.SaveChangesAsync();
 
-            // 2. Mapster maps the tracking entity details back to the DTO
-            // Map the tracking database ID, Username, and Email back to the presentation layer
-            return user.Adapt<UserResponseDTO>();
+            // Map entity back to DTO
+            return _mapper.Map<UserResponseDTO>(user);
         }
     }
 }

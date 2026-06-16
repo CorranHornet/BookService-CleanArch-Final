@@ -1,6 +1,6 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.MediaItems.Queries;
-using Mapster;
+using MapsterMapper;
 using MediatR;
 
 namespace BookService.Application.MediaItems.Handlers
@@ -9,10 +9,12 @@ namespace BookService.Application.MediaItems.Handlers
         : IRequestHandler<GetMediaItemByIdQuery, MediaItemResponseDTO?>
     {
         private readonly IMediaItemRepository _repo;
+        private readonly IMapper _mapper;
 
-        public GetMediaItemByIdHandler(IMediaItemRepository repo)
+        public GetMediaItemByIdHandler(IMediaItemRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
         }
 
         public async Task<MediaItemResponseDTO?> Handle(
@@ -24,7 +26,7 @@ namespace BookService.Application.MediaItems.Handlers
             if (item == null)
                 return null;
 
-            return item.Adapt<MediaItemResponseDTO>();
+            return _mapper.Map<MediaItemResponseDTO>(item);
         }
     }
 }

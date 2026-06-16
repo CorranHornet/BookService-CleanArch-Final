@@ -1,4 +1,5 @@
 ﻿using BookService.Application.MediaItems.Commands;
+using MapsterMapper;
 using MediatR;
 
 namespace BookService.Application.MediaItems.Handlers
@@ -7,10 +8,12 @@ namespace BookService.Application.MediaItems.Handlers
         : IRequestHandler<UpdateMediaItemCommand, bool>
     {
         private readonly IMediaItemRepository _repo;
+        private readonly IMapper _mapper;
 
-        public UpdateMediaItemHandler(IMediaItemRepository repo)
+        public UpdateMediaItemHandler(IMediaItemRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
         }
 
         public async Task<bool> Handle(
@@ -33,7 +36,7 @@ namespace BookService.Application.MediaItems.Handlers
                 item.GenreId = request.GenreId.Value;
             }
 
-            await _repo.Save();
+            await _repo.SaveChangesAsync();
             return true;
         }
     }
