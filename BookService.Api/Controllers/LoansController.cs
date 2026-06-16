@@ -23,23 +23,21 @@ namespace BookService.Api.Controllers
         }
 
         [HttpPost("borrow")]
-        public async Task<IActionResult> Borrow(int userId, int mediaUnitId)
+        public async Task<IActionResult> Borrow([FromBody]int userId, [FromQuery] CreateLoanCommand command)
         {
-            var result = await _mediator.Send( new CreateLoanCommand
-            {
-                UserId = userId,
-                MediaUnitId = mediaUnitId
-            });
-
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
 
         [HttpPost("return/{loanId}")]
         public async Task<IActionResult> Return(int loanId)
         {
-            var result = await _mediator.Send(new { message = "Loan already returned or invalid."});
-
-            return Ok();
+            var result = await _mediator.Send(new ReturnLoansCommand
+            {
+                LoanId = loanId
+            });
+            
+            return result ? Ok(result) : BadRequest("Invalid or already returned loan.");
         }
     }
 }
