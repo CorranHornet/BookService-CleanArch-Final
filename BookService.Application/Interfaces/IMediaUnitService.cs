@@ -4,9 +4,9 @@ namespace BookService.Application.Interfaces
 {
     public interface IMediaUnitService
     {
-        Task<IEnumerable<MediaUnitResponseDTO>> GetAllAsync();//(int? mediaItemId = null);
-        Task<MediaUnitResponseDTO?> GetByIdAsync(int id);
-        Task<MediaUnitResponseDTO> CreateAsync(MediaUnitCreateDTO dto);
+        Task<IEnumerable<MediaUnitDTO>> GetAllAsync();
+        Task<MediaUnitDTO?> GetByIdAsync(int id);
+        Task<MediaUnitDTO> CreateAsync(MediaUnitCreateDTO dto);
         Task<bool> UpdateAsync(int id, MediaUnitUpdateDTO dto);
         Task<bool> DeleteAsync(int id);
 

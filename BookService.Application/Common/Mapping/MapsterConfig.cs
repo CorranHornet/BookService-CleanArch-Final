@@ -1,7 +1,8 @@
-﻿using Mapster;
-using BookService.Application.DTOs;
-using BookService.Domain.Entities;
+﻿using BookService.Application.DTOs;
+using BookService.Application.MediaItems.Commands;
 using BookService.Application.MediaUnits.Commands;
+using BookService.Domain.Entities;
+using Mapster;
 
 namespace BookService.Application.Common.Mapping
 {
@@ -11,45 +12,63 @@ namespace BookService.Application.Common.Mapping
         {
             var config = TypeAdapterConfig.GlobalSettings;
 
-            // Basic mappings
+            // =========================================================
+            // MEDIA ITEM
+            // =========================================================
             config.NewConfig<MediaItem, MediaItemResponseDTO>()
-                .Map(dest => dest.Genre, src => src.Genre != null ? src.Genre.Name : "")
-                .Map(dest => dest.GenreId, src => src.GenreId);
+                .Map(dest => dest.Genre,
+                    src => src.Genre != null ? src.Genre.Name : string.Empty);
 
+            config.NewConfig<CreateMediaItemCommand, MediaItem>();
+
+            // =========================================================
+            // USER
+            // =========================================================
             config.NewConfig<User, UserDTO>();
 
             config.NewConfig<User, LoginResponseDTO>()
                 .Ignore(dest => dest.Token);
 
+            // =========================================================
+            // GENRE / LOAN
+            // =========================================================
             config.NewConfig<Genre, GenreResponseDTO>();
-
             config.NewConfig<Loan, LoanResponseDTO>();
 
-            config.NewConfig<MediaUnit, MediaUnitDTO>();
-
-            config.NewConfig<CreateMediaUnitCommand, PhysicalBookUnit>()
-                .Map(dest => dest.PageCount, src => src.PageCount);
-
-            config.NewConfig<CreateMediaUnitCommand, AudiobookUnit>()
-               .Map(dest => dest.DurationMinutes, src =>src.DurationMinutes);
-
             // =========================================================
-            // MediaUnit -> MediaUnitResponseDTO
+            // MEDIA UNIT (READ DTO)
             // =========================================================
-
-            config.NewConfig<MediaUnit, MediaUnitResponseDTO>()
+            config.NewConfig<MediaUnit, MediaUnitDTO>()
                 .Map(dest => dest.UnitType,
                     src => src is PhysicalBookUnit ? "Book" : "Audiobook")
 
                 .Map(dest => dest.PageCount,
                     src => src is PhysicalBookUnit
                         ? ((PhysicalBookUnit)src).PageCount
-                        : 0)
+                        : (int?)null)
 
                 .Map(dest => dest.DurationMinutes,
                     src => src is AudiobookUnit
                         ? ((AudiobookUnit)src).DurationMinutes
-                        : 0);
+                        : (int?)null);
+
+            // =========================================================
+            // CREATE MEDIA UNIT (WRITE SIDE)
+            // =========================================================
+
+            config.NewConfig<CreateMediaUnitCommand, PhysicalBookUnit>()
+                .Map(dest => dest.PageCount,
+                    src => src.PageCount.HasValue ? src.PageCount.Value : 0);
+
+            config.NewConfig<CreateMediaUnitCommand, AudiobookUnit>()
+                .Map(dest => dest.DurationMinutes,
+                    src => src.DurationMinutes.HasValue ? src.DurationMinutes.Value : 0);
+
+            // =========================================================
+            // OPTIONAL: explicit reverse mapping safety (helps debugging)
+            // =========================================================
+            config.NewConfig<PhysicalBookUnit, MediaUnitDTO>();
+            config.NewConfig<AudiobookUnit, MediaUnitDTO>();
         }
     }
 }
