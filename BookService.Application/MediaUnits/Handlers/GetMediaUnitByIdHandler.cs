@@ -6,7 +6,7 @@ using MapsterMapper;
 
 namespace BookService.Application.MediaUnits.Handlers;
 
-public class GetMediaUnitByIdHandler : IRequestHandler<GetMediaUnitByIdQuery, MediaUnitResponseDTO?>
+public class GetMediaUnitByIdHandler : IRequestHandler<GetMediaUnitByIdQuery, MediaUnitDTO?>
 {
     private readonly IMediaUnitRepository _repo;
     private readonly IMapper _mapper;
@@ -15,11 +15,11 @@ public class GetMediaUnitByIdHandler : IRequestHandler<GetMediaUnitByIdQuery, Me
         _repo = repo;
         _mapper = mapper;
     }
-    public async Task<MediaUnitResponseDTO?> Handle(GetMediaUnitByIdQuery request, CancellationToken ct)
+    public async Task<MediaUnitDTO?> Handle(GetMediaUnitByIdQuery request, CancellationToken ct)
     {
         var mu = await _repo.GetById(request.Id);
         if (mu == null) return null;
 
-        return _mapper.Map<MediaUnitResponseDTO>(mu);
+        return _mapper.Map<MediaUnitDTO>(mu);
     }
 }

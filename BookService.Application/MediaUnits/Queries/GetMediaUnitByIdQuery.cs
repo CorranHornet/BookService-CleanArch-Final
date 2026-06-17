@@ -3,4 +3,4 @@ using BookService.Application.DTOs;
 
 namespace BookService.Application.MediaUnits.Queries;
 
-public record GetMediaUnitByIdQuery(int Id) : IRequest<MediaUnitResponseDTO?>;
+public record GetMediaUnitByIdQuery(int Id) : IRequest<MediaUnitDTO?>;

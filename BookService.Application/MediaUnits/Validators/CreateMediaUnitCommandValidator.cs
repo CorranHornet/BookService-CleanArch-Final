@@ -25,6 +25,20 @@ namespace BookService.Application.MediaUnits.Validators
                 .WithMessage("MediaItemId must be greater than 0.")
                 .MustAsync(MediaItemExists)
                 .WithMessage("The specified MediaItem does not exist.");
+
+            RuleFor(x => x)
+                .Must(x =>
+                    (x.PageCount.HasValue && !x.DurationMinutes.HasValue) ||
+                    (!x.PageCount.HasValue && x.DurationMinutes.HasValue))
+                .WithMessage("Specify either PageCount or DurationMinutes, not both, and one is required.");
+
+            RuleFor(x => x.PageCount)
+                .GreaterThan(0)
+                .When(x => x.PageCount.HasValue);
+
+            RuleFor(x => x.DurationMinutes)
+                .GreaterThan(0)
+                .When(x => x.DurationMinutes.HasValue);
         }
 
         private async Task<bool> MediaItemExists(int mediaItemId, CancellationToken ct)
