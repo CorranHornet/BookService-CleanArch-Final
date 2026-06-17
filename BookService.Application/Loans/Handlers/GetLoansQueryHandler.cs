@@ -1,4 +1,5 @@
 ﻿using BookService.Application.DTOs;
+using BookService.Application.Interfaces;
 using BookService.Application.Loans.Commands;
 using BookService.Application.Loans.Queries;
 using Mapster;

@@ -1,4 +1,5 @@
 ﻿using BookService.Application.DTOs;
+using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using MapsterMapper;
 using MediatR;
