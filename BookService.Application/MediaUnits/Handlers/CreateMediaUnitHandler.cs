@@ -7,7 +7,7 @@ using MediatR;
 
 namespace BookService.Application.MediaUnits.Handlers;
 
-public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, MediaUnitResponseDTO>
+public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, MediaUnitDTO>
 {
     private readonly IMediaUnitRepository _repo;
     private readonly IMapper _mapper;
@@ -18,18 +18,28 @@ public class CreateMediaUnitHandler : IRequestHandler<CreateMediaUnitCommand, Me
         _mapper = mapper;
     }
 
-    public async Task<MediaUnitResponseDTO> Handle(CreateMediaUnitCommand request, CancellationToken ct)
+    public async Task<MediaUnitDTO> Handle(CreateMediaUnitCommand request, CancellationToken ct)
     {
-        // 1. Create entity based on input data(polymorphism)
-        MediaUnit entity = (request.DurationMinutes.HasValue && request.DurationMinutes.Value > 0)
-            ? _mapper.Map<AudiobookUnit>(request)
-            : _mapper.Map<PhysicalBookUnit>(request);
+        if (request.PageCount.HasValue && request.DurationMinutes.HasValue)
+            throw new ArgumentException("Cannot be both Book and Audiobook");
 
-        // 2. Save
+        if (!request.PageCount.HasValue && !request.DurationMinutes.HasValue)
+            throw new ArgumentException("Must specify either PageCount or DurationMinutes");
+
+        MediaUnit entity;
+
+        if (request.PageCount.HasValue)
+        {
+            entity = _mapper.Map<PhysicalBookUnit>(request);
+        }
+        else
+        {
+            entity = _mapper.Map<AudiobookUnit>(request);
+        }
+
         await _repo.Add(entity);
         await _repo.SaveChangesAsync();
 
-        // 3. Return response
-        return _mapper.Map<MediaUnitResponseDTO>(entity);
+        return _mapper.Map<MediaUnitDTO>(entity);
     }
 }

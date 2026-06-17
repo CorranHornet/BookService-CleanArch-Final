@@ -3,7 +3,7 @@ using BookService.Application.DTOs;
 
 namespace BookService.Application.MediaUnits.Commands;
 
-public class CreateMediaUnitCommand : IRequest<MediaUnitResponseDTO?>
+public class CreateMediaUnitCommand : IRequest<MediaUnitDTO?>
 {
     public string Title { get; set; } = string.Empty;
     public int Number { get; set; }
