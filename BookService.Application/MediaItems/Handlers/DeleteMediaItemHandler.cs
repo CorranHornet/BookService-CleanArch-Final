@@ -1,4 +1,5 @@
-﻿using BookService.Application.MediaItems.Commands;
+﻿using BookService.Application.Interfaces;
+using BookService.Application.MediaItems.Commands;
 using MapsterMapper;
 using MediatR;
 

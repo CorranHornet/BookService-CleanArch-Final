@@ -4,6 +4,7 @@ using BookService.Application.Common.Diagnostics;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using BookService.Application.Interfaces;
 
 namespace BookService.Application.MediaItems.Handlers
 {
