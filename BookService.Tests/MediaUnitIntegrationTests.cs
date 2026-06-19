@@ -101,8 +101,8 @@ public class MediaUnitIntegrationTests : IClassFixture<WebApplicationFactory<Pro
         var audiobook = new AudiobookUnit { Title = "Audio Test", DurationMinutes = 45 };
         var book = new PhysicalBookUnit { Title = "Book Test", PageCount = 150 };
 
-        var audioDto = audiobook.Adapt<MediaUnitResponseDTO>();
-        var bookDto = book.Adapt<MediaUnitResponseDTO>();
+        var audioDto = audiobook.Adapt<MediaUnitDTO>();
+        var bookDto = book.Adapt<MediaUnitDTO>();
 
         Assert.Equal("Audiobook", audioDto.UnitType);
         Assert.Equal(45, audioDto.DurationMinutes);

@@ -29,8 +29,8 @@ public class MapsterSafetyTests
             DurationMinutes = 90
         };
 
-        var dto1 = book.Adapt<MediaUnitResponseDTO>();
-        var dto2 = audio.Adapt<MediaUnitResponseDTO>();
+        var dto1 = book.Adapt<MediaUnitDTO>();
+        var dto2 = audio.Adapt<MediaUnitDTO>();
 
         Assert.Equal(200, dto1.PageCount);
         Assert.Equal(90, dto2.DurationMinutes);

@@ -115,7 +115,7 @@ public class AssignmentRequirementTests2
             MediaItemId = 1
         };
 
-        var dto = book.Adapt<MediaUnitResponseDTO>();
+        var dto = book.Adapt<MediaUnitDTO>();
 
         Assert.NotNull(dto);
         Assert.Equal("Test Book", dto.Title);

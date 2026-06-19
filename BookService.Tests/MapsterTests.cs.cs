@@ -40,7 +40,7 @@ public class MapsterTests
             MediaItemId = 10
         };
 
-        var dto = entity.Adapt<MediaUnitResponseDTO>();
+        var dto = entity.Adapt<MediaUnitDTO>();
 
         Assert.NotNull(dto);
         Assert.Equal("Clean Code", dto.Title);
@@ -64,7 +64,7 @@ public class MapsterTests
             MediaItemId = 20
         };
 
-        var dto = book.Adapt<MediaUnitResponseDTO>();
+        var dto = book.Adapt<MediaUnitDTO>();
 
         Assert.NotNull(dto);
         Assert.Equal("Domain Driven Design", dto.Title);
@@ -87,7 +87,7 @@ public class MapsterTests
             MediaItemId = 30
         };
 
-        var dto = entity.Adapt<MediaUnitResponseDTO>();
+        var dto = entity.Adapt<MediaUnitDTO>();
 
         Assert.NotNull(dto);
         Assert.Equal("Clean Architecture Audio", dto.Title);
@@ -111,7 +111,7 @@ public class MapsterTests
 
         var ex = Record.Exception(() =>
         {
-            var dto = book.Adapt<MediaUnitResponseDTO>();
+            var dto = book.Adapt<MediaUnitDTO>();
         });
 
         Assert.Null(ex);
