@@ -1,6 +1,7 @@
 ﻿using BookService.Application.Interfaces;
 using BookService.Infrastructure.Persistence;
-using BookService.Infrastructure.Repositories; 
+using BookService.Infrastructure.Repositories;
+using BookService.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

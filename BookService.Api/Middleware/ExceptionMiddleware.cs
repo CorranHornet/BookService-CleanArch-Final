@@ -26,28 +26,17 @@ namespace BookService.Api.Middleware
                 context.Response.StatusCode = ex switch
                 {
                     NotFoundException => StatusCodes.Status404NotFound,
-
                     FluentValidation.ValidationException => StatusCodes.Status400BadRequest,
-
                     ArgumentException => StatusCodes.Status400BadRequest,
-
                     InvalidOperationException => StatusCodes.Status409Conflict,
-
                     _ => StatusCodes.Status500InternalServerError
-                };
-
-                var message = ex switch
-                {
-                    FluentValidation.ValidationException validationEx =>
-                        "Validation failed: " + string.Join(" | ",
-                            validationEx.Errors.Select(e => e.ErrorMessage)),
-
-                    _ => ex.Message
                 };
 
                 var response = new
                 {
-                    error = message
+                    error = ex is FluentValidation.ValidationException validationEx
+                        ? validationEx.Errors.Select(e => e.ErrorMessage)
+                        : new[] { ex.Message }
                 };
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));
