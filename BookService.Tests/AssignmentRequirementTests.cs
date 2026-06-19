@@ -16,9 +16,10 @@ public class AssignmentRequirementTests
         var applicationAssembly = Assembly.GetAssembly(typeof(GetMediaUnitByIdHandler));
 
         // Find all types that are Handlers or Services
-        var targetTypes = applicationAssembly.GetTypes()
+        // Fix: Use ?. and ?? to safely handle potential nulls
+        var targetTypes = applicationAssembly?.GetTypes()
             .Where(t => t.Name.EndsWith("Handler") || t.Name.EndsWith("Service"))
-            .ToList();
+            .ToList() ?? new List<Type>();
 
         // Act & Assert
         foreach (var type in targetTypes)

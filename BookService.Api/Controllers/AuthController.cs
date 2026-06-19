@@ -44,6 +44,10 @@ namespace BookService.Api.Controllers
 
             var user = await _authService.GetUserByUsernameAsync(request.Username);
 
+            // Fix: Explicitly handle the case where the user might not be found
+            if (user is null)
+                return NotFound("User not found after successful authentication.");
+
             // 3. Map the User entity to LoginResponseDTO, then assign the Token field
             var response = user.Adapt<LoginResponseDTO>();
             response.Token = token;

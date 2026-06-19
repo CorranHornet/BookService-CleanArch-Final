@@ -25,7 +25,7 @@ public class MapsterStrictTests
             PageCount = 123
         };
 
-        var dto = book.Adapt<MediaUnitResponseDTO>();
+        var dto = book.Adapt<MediaUnitDTO>();
 
         Assert.Equal("Test Book", dto.Title);
         Assert.Equal(123, dto.PageCount);
@@ -40,7 +40,7 @@ public class MapsterStrictTests
             DurationMinutes = 45
         };
 
-        var dto = unit.Adapt<MediaUnitResponseDTO>();
+        var dto = unit.Adapt<MediaUnitDTO>();
 
         Assert.Equal("Audio Test", dto.Title);
     }
