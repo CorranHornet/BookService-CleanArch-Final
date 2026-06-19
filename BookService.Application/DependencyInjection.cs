@@ -7,31 +7,33 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace BookService.Application;
-
-public static class DependencyInjection
+namespace BookService.Application
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static class DependencyInjection
     {
-        var assembly = Assembly.GetExecutingAssembly();
+        public static IServiceCollection AddApplication(this IServiceCollection services)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
 
-        // Register MediatR and Pipeline Behaviors
-        services.AddMediatR(cfg => {
-            cfg.RegisterServicesFromAssembly(assembly);
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-        });
+            // Register MediatR and Pipeline Behaviors
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(assembly);
+                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            });
 
-        // Register FluentValidation
-        services.AddValidatorsFromAssembly(assembly);
+            // Register FluentValidation
+            services.AddValidatorsFromAssembly(assembly);
 
-        // Register Mapster as a Service for consistent DTO mapping
-        var config = TypeAdapterConfig.GlobalSettings;
-        config.Scan(assembly);
-        services.AddSingleton<IMapper>(new Mapper(config));
+            // Register Mapster as a Service for consistent DTO mapping
+            var config = TypeAdapterConfig.GlobalSettings;
+            config.Scan(assembly);
+            services.AddSingleton<IMapper>(new Mapper(config));
 
-        // Register custom mapping configurations
-        MapsterConfig.Register();
+            // Register custom mapping configurations
+            MapsterConfig.Register();
 
-        return services;
+            return services;
+        }
     }
 }

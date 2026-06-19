@@ -2,6 +2,6 @@
 {
     public class PhysicalBookUnitDTO : MediaUnitDTO
     {
-        public int PageCount { get; set; }
+        public new int PageCount { get; set; }
     }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-
-namespace BookService.Application.DTOs
+﻿namespace BookService.Application.DTOs
 {
     public class MediaUnitUpdateDTO
     {
