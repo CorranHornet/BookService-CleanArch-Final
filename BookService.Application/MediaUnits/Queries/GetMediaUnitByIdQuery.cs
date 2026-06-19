@@ -1,6 +1,8 @@
 using MediatR;
 using BookService.Application.DTOs;
 
-namespace BookService.Application.MediaUnits.Queries;
+namespace BookService.Application.MediaUnits.Queries
+{
 
-public record GetMediaUnitByIdQuery(int Id) : IRequest<MediaUnitDTO?>;
+    public record GetMediaUnitByIdQuery(int Id) : IRequest<MediaUnitDTO?>;
+}

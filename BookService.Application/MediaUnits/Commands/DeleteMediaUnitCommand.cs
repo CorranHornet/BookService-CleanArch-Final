@@ -1,5 +1,7 @@
 using MediatR;
 
-namespace BookService.Application.MediaUnits.Commands;
+namespace BookService.Application.MediaUnits.Commands
+{
 
-public record DeleteMediaUnitCommand(int Id) : IRequest<bool>;
+    public record DeleteMediaUnitCommand(int Id) : IRequest<bool>;
+}

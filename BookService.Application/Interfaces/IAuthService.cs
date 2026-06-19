@@ -1,7 +1,6 @@
 ﻿using BookService.Domain.Entities;
 using BookService.Application.DTOs;
 
-
 namespace BookService.Application.Interfaces
 {
     public interface IAuthService

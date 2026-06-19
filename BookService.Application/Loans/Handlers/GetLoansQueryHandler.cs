@@ -1,8 +1,6 @@
 ﻿using BookService.Application.DTOs;
 using BookService.Application.Interfaces;
-using BookService.Application.Loans.Commands;
 using BookService.Application.Loans.Queries;
-using Mapster;
 using MapsterMapper;
 using MediatR;
 
@@ -23,9 +21,7 @@ namespace BookService.Application.Loans.Handlers
             _mapper = mapper;
 
         }
-
-        
-public async Task<IEnumerable<LoanResponseDTO>> Handle(GetLoansQuery request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<LoanResponseDTO>> Handle(GetLoansQuery request, CancellationToken cancellationToken)
         {
             var loans = await _repo.GetAllWithIncludes();
 
@@ -33,4 +29,6 @@ public async Task<IEnumerable<LoanResponseDTO>> Handle(GetLoansQuery request, Ca
         }
     }
 }
+
+        
 
