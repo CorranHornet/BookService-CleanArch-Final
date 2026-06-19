@@ -1,78 +1,97 @@
-﻿using BookService.Application.DTOs;
+﻿using BookService.Application.Common.Settings;
+using BookService.Application.DTOs;
+using BookService.Application.Interfaces;
 using BookService.Domain.Entities;
 using BookService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
-namespace BookService.Application.Interfaces
+namespace BookService.Infrastructure.Services
 {
-    public class AuthService(ApplicationDbContext context, IConfiguration configuration) : IAuthService
+    // Handles authentication-related operations such as user registration, login, and JWT generation.
+    public class AuthService : IAuthService
     {
+        private readonly ApplicationDbContext _context;
+        private readonly JwtSettings _jwtSettings;
+
+        public AuthService(ApplicationDbContext context, IOptions<JwtSettings> jwtSettings)
+        {
+            _context = context;
+            _jwtSettings = jwtSettings.Value;
+        }
+
+        // Registers a new user if the username is not already taken.
+        // Passwords are securely hashed before storage.
         public async Task<User?> RegisterAsync(LoginRequestDTO request)
         {
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            // Validate input
+            if (string.IsNullOrWhiteSpace(request.Username) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
                 return null;
+            }
 
-            // Kontrollera om användaren redan finns direkt i databasen
-            var existingUser = await context.Users.AnyAsync(u => u.Username == request.Username);
-            if (existingUser) return null;
+            // Check if user already exists
+            var userExists = await _context.Users
+                .AnyAsync(u => u.Username == request.Username);
+
+            if (userExists)
+                return null;
 
             var user = new User
             {
                 Username = request.Username,
-                Role = "Admin", // Standardroll
-                Email = string.Empty
+                Email = string.Empty,
+
+                // Default role assigned at registration.
+                Role = "User"
             };
 
-            // Hasha lösenordet innan sparning
+            // Hash password before saving to database
             var passwordHasher = new PasswordHasher<User>();
             user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
             return user;
         }
 
+        // Validates user credentials and returns a JWT token if authentication succeeds.
         public async Task<string?> LoginAsync(LoginRequestDTO request)
         {
-            // 1. Logga vad som kommer in för att se om JSON-mappningen fungerar
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            // Validate input
+            if (string.IsNullOrWhiteSpace(request.Username) ||
+                string.IsNullOrWhiteSpace(request.Password))
             {
                 return null;
             }
 
-            // 2. Hämta användaren
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            // Retrieve user from database
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == request.Username);
+
             if (user == null)
-            {
                 return null;
-            }
 
-            // 3. FORCE LOGIN FÖR DIN ADMIN (Detta fixar 401-problemet direkt)
-            // Om lösenordet är "123" och användaren är din admin, släpp in dem direkt.
-            if (request.Password == "123" && (user.Username == "user@user.com" || user.Role == "Admin"))
-            {
-                return CreateToken(user);
-            }
-
-            // 4. Standardkontroll för andra användare (Hash-kontroll)
+            // Verify password using ASP.NET Identity hasher
             var passwordHasher = new PasswordHasher<User>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            var verificationResult =
+                passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
-            if (result == PasswordVerificationResult.Failed)
-            {
+            if (verificationResult == PasswordVerificationResult.Failed)
                 return null;
-            }
 
-            return CreateToken(user);
+            // Generate JWT token upon successful authentication
+            return GenerateJwtToken(user);
         }
-        private string CreateToken(User user)
+
+        // Generates a signed JWT token containing user identity and role claims.
+        private string GenerateJwtToken(User user)
         {
             var claims = new List<Claim>
             {
@@ -81,22 +100,31 @@ namespace BookService.Application.Interfaces
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["AppSettings:Token"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var keyBytes = Convert.FromBase64String(_jwtSettings.Token.Trim());
+            var key = new SymmetricSecurityKey(keyBytes);
+
+            var credentials = new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha512Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(1),
-                SigningCredentials = creds
+                Expires = DateTime.UtcNow.AddDays(1),
+                SigningCredentials = credentials
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
+
             return tokenHandler.WriteToken(token);
         }
 
-        public async Task<User?> GetUserByUsernameAsync(string username) =>
-            await context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        // Retrieves a user by username.
+        public async Task<User?> GetUserByUsernameAsync(string username)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == username);
+        }
     }
 }
