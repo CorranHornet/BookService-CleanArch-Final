@@ -3,84 +3,85 @@ using Microsoft.AspNetCore.Mvc;
 using BookService.Application.MediaUnits.Commands;
 using BookService.Application.MediaUnits.Queries;
 
-namespace BookService.Api.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class MediaUnitsController : ControllerBase
+namespace BookService.Api.Controllers
 {
-    private readonly IMediator _mediator;
-
-    public MediaUnitsController(IMediator mediator)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class MediaUnitsController : ControllerBase
     {
-        _mediator = mediator;
-    }
+        private readonly IMediator _mediator;
 
-    // Retrieves all media units
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
-    {
-        var result = await _mediator.Send(new GetAllMediaUnitsQuery());
-        return Ok(result);
-    }
+        public MediaUnitsController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
 
-    // Retrieves a single media unit by id
-    [HttpGet("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var result = await _mediator.Send(new GetMediaUnitByIdQuery(id));
+        // Retrieves all media units
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _mediator.Send(new GetAllMediaUnitsQuery());
+            return Ok(result);
+        }
 
-        if (result == null)
-            return NotFound();
+        // Retrieves a single media unit by id
+        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _mediator.Send(new GetMediaUnitByIdQuery(id));
 
-        return Ok(result);
-    }
+            if (result == null)
+                return NotFound();
 
-    // Creates a new media unit
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Create(CreateMediaUnitCommand command)
-    {
-        var result = await _mediator.Send(command);
+            return Ok(result);
+        }
 
-        // Keeps your current contract (no restructuring of handlers required)
-        if (result == null)
-            return NotFound($"MediaItem {command.MediaItemId} not found.");
+        // Creates a new media unit
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Create(CreateMediaUnitCommand command)
+        {
+            var result = await _mediator.Send(command);
 
-        return Ok(result);
-    }
+            // Keeps your current contract (no restructuring of handlers required)
+            if (result == null)
+                return NotFound($"MediaItem {command.MediaItemId} not found.");
 
-    // Updates an existing media unit
-    [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(int id, UpdateMediaUnitCommand command)
-    {
-        command.Id = id;
+            return Ok(result);
+        }
 
-        var success = await _mediator.Send(command);
+        // Updates an existing media unit
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update(int id, UpdateMediaUnitCommand command)
+        {
+            command.Id = id;
 
-        if (!success)
-            return NotFound();
+            var success = await _mediator.Send(command);
 
-        return NoContent();
-    }
+            if (!success)
+                return NotFound();
 
-    // Deletes a media unit
-    [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var success = await _mediator.Send(new DeleteMediaUnitCommand(id));
+            return NoContent();
+        }
 
-        if (!success)
-            return NotFound();
+        // Deletes a media unit
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _mediator.Send(new DeleteMediaUnitCommand(id));
 
-        return NoContent();
+            if (!success)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }

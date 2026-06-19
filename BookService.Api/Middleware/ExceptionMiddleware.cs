@@ -1,5 +1,4 @@
 ﻿using BookService.Application.Common.Exceptions;
-using FluentValidation;
 using System.Text.Json;
 
 namespace BookService.Api.Middleware

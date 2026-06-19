@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mapster;
 
-
 namespace BookService.Api.Controllers
 {
     [Route("api/[controller]")]
@@ -19,8 +18,6 @@ namespace BookService.Api.Controllers
             _authService = authService;
         }
 
-
-
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<ActionResult<User>> Register(LoginRequestDTO request)
@@ -30,7 +27,7 @@ namespace BookService.Api.Controllers
             if (user == null)
                 return BadRequest(new { message = "Username already exists or invalid input." });
 
-            // 2. Use Mapster to create a clean UserDTO instead of an anonymous object
+            // Return a DTO instead of exposing the domain entity directly
             return Ok(user.Adapt<UserDTO>());
         }
 
@@ -44,11 +41,11 @@ namespace BookService.Api.Controllers
 
             var user = await _authService.GetUserByUsernameAsync(request.Username);
 
-            // Fix: Explicitly handle the case where the user might not be found
+            // Ensure user still exists after successful authentication
             if (user is null)
                 return NotFound( new { message = "User not found after successful authentication." });
 
-            // 3. Map the User entity to LoginResponseDTO, then assign the Token field
+            // Map user data to response DTO and attach generated JWT token
             var response = user.Adapt<LoginResponseDTO>();
             response.Token = token;
 
@@ -61,9 +58,6 @@ namespace BookService.Api.Controllers
         {
             return Ok (new { message = "You are authenticated!" });
         }
-
-
-
-
     }
 }
+
