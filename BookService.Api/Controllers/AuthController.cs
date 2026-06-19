@@ -28,25 +28,25 @@ namespace BookService.Api.Controllers
             var user = await _authService.RegisterAsync(request);
 
             if (user == null)
-                return BadRequest("Username already exists or invalid input.");
+                return BadRequest(new { message = "Username already exists or invalid input." });
 
             // 2. Use Mapster to create a clean UserDTO instead of an anonymous object
             return Ok(user.Adapt<UserDTO>());
         }
 
-        [HttpPost("Login")]
+        [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<string>> Login(LoginRequestDTO request)
+        public async Task<ActionResult<LoginResponseDTO>> Login(LoginRequestDTO request)
         {
             var token = await _authService.LoginAsync(request);
             if (token is null)
-                return Unauthorized("Invalid username or password.");
+                return Unauthorized(new { message = "Invalid username or password." });
 
             var user = await _authService.GetUserByUsernameAsync(request.Username);
 
             // Fix: Explicitly handle the case where the user might not be found
             if (user is null)
-                return NotFound("User not found after successful authentication.");
+                return NotFound( new { message = "User not found after successful authentication." });
 
             // 3. Map the User entity to LoginResponseDTO, then assign the Token field
             var response = user.Adapt<LoginResponseDTO>();
@@ -59,7 +59,7 @@ namespace BookService.Api.Controllers
         [HttpGet]
         public IActionResult AuthenticatedOnlyEndpoint()
         {
-            return Ok("You are authenticated!");
+            return Ok (new { message = "You are authenticated!" });
         }
 
 
