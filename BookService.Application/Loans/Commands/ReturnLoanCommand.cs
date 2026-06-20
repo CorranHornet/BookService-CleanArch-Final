@@ -1,5 +1,4 @@
-﻿using BookService.Application.DTOs;
-using MediatR;
+﻿using MediatR;
 
 namespace BookService.Application.Loans.Commands
 {

@@ -4,7 +4,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace BookService.Api.Controllers
 {
     [Authorize]
@@ -29,19 +28,15 @@ namespace BookService.Api.Controllers
         public async Task<IActionResult> GetById(int id)
             => Ok(await _mediator.Send(new GetGenreByIdQuery(id)));
 
-
-
-        // POST: api/genre
+         // POST: api/genre
         [HttpPost]
         public async Task<IActionResult> Create(CreateGenreCommand command)
              => Ok(await _mediator.Send(command));
-
 
         // DELETE: api/genre/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
 
            => Ok(await _mediator.Send(new DeleteGenreCommand(id)));
-
     }
 }

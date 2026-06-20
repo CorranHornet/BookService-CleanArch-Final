@@ -18,8 +18,8 @@ namespace BookService.IntegrationTests
                 };
                 config.AddInMemoryCollection(testConfig!);
             });
-
-            // Note: DB selection is handled automatically inside Program.cs now!
         }
     }
 }
+
+        

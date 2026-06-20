@@ -1,14 +1,16 @@
-﻿namespace BookService.Api;
-public static class DependencyInjection
+﻿namespace BookService.Api
 {
-    public static IServiceCollection AddApi(this IServiceCollection services)
+    public static class DependencyInjection
     {
-        services.AddControllers();
+        public static IServiceCollection AddApi(this IServiceCollection services)
+        {
+            services.AddControllers();
 
-        // Swagger documentation setup
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+            // Swagger documentation setup
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
 
-        return services;
+            return services;
+        }
     }
 }

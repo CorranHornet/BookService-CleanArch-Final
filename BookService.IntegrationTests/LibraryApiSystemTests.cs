@@ -1,5 +1,5 @@
-﻿using BookService.Application;           // DI Application-layer
-using BookService.Infrastructure;        // DI Infrastructure-layer
+﻿using BookService.Application;          
+using BookService.Infrastructure;        
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

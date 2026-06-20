@@ -3,73 +3,74 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace BookService.Application.Common.Behaviors;
-
-public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+namespace BookService.Application.Common.Behaviors
 {
-    private readonly IEnumerable<IValidator<TRequest>> _validators;
-    private readonly ILogger<ValidationBehavior<TRequest, TResponse>> _logger;
-
-    public ValidationBehavior(
-        IEnumerable<IValidator<TRequest>> validators,
-        ILogger<ValidationBehavior<TRequest, TResponse>> logger)
+    public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+        where TRequest : IRequest<TResponse>
     {
-        _validators = validators;
-        _logger = logger;
-    }
+        private readonly IEnumerable<IValidator<TRequest>> _validators;
+        private readonly ILogger<ValidationBehavior<TRequest, TResponse>> _logger;
 
-    public async Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
-    {
-        if (!_validators.Any())
+        public ValidationBehavior(
+            IEnumerable<IValidator<TRequest>> validators,
+            ILogger<ValidationBehavior<TRequest, TResponse>> logger)
         {
-            return await next();
+            _validators = validators;
+            _logger = logger;
         }
 
-        var context = new ValidationContext<TRequest>(request);
-
-        var stopwatch = Stopwatch.StartNew();
-
-        var validationResults = await Task.WhenAll(
-            _validators.Select(v => v.ValidateAsync(context, cancellationToken))
-        );
-
-        var failures = validationResults
-            .Where(r => !r.IsValid)
-            .SelectMany(r => r.Errors)
-            .ToList();
-
-        if (failures.Any())
+        public async Task<TResponse> Handle(
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
+            CancellationToken cancellationToken)
         {
-            stopwatch.Stop();
-
-            _logger.LogWarning(
-                "Validation failed for {RequestType} with {FailureCount} errors in {ElapsedMs}ms",
-                typeof(TRequest).Name,
-                failures.Count,
-                stopwatch.ElapsedMilliseconds);
-
-            foreach (var failure in failures)
+            if (!_validators.Any())
             {
-                _logger.LogWarning(
-                    "Validation error on {Property}: {Error}",
-                    failure.PropertyName,
-                    failure.ErrorMessage);
+                return await next();
             }
 
-            throw new ValidationException(failures);
+            var context = new ValidationContext<TRequest>(request);
+
+            var stopwatch = Stopwatch.StartNew();
+
+            var validationResults = await Task.WhenAll(
+                _validators.Select(v => v.ValidateAsync(context, cancellationToken))
+            );
+
+            var failures = validationResults
+                .Where(r => !r.IsValid)
+                .SelectMany(r => r.Errors)
+                .ToList();
+
+            if (failures.Any())
+            {
+                stopwatch.Stop();
+
+                _logger.LogWarning(
+                    "Validation failed for {RequestType} with {FailureCount} errors in {ElapsedMs}ms",
+                    typeof(TRequest).Name,
+                    failures.Count,
+                    stopwatch.ElapsedMilliseconds);
+
+                foreach (var failure in failures)
+                {
+                    _logger.LogWarning(
+                        "Validation error on {Property}: {Error}",
+                        failure.PropertyName,
+                        failure.ErrorMessage);
+                }
+
+                throw new ValidationException(failures);
+            }
+
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Validation succeeded for {RequestType} in {ElapsedMs}ms",
+                typeof(TRequest).Name,
+                stopwatch.ElapsedMilliseconds);
+
+            return await next();
         }
-
-        stopwatch.Stop();
-
-        _logger.LogInformation(
-            "Validation succeeded for {RequestType} in {ElapsedMs}ms",
-            typeof(TRequest).Name,
-            stopwatch.ElapsedMilliseconds);
-
-        return await next();
     }
 }

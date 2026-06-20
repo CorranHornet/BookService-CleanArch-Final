@@ -1,52 +1,50 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-using BookService.Application.MediaUnits.Handlers; // Using this to locate your Application assembly
-using BookService.Application.DTOs;
-using Xunit;
+﻿using System.Reflection;
+using BookService.Application.MediaUnits.Handlers;
 
-namespace BookService.Tests;
-
-public class AssignmentRequirementTests
+namespace BookService.Tests
 {
-    [Fact]
-    public void HandlersAndServices_ShouldNotContainManualDTOMapping()
+
+    public class AssignmentRequirementTests
     {
-        // Arrange: Get the assembly where your MediatR Handlers live
-        var applicationAssembly = Assembly.GetAssembly(typeof(GetMediaUnitByIdHandler));
-
-        // Find all types that are Handlers or Services
-        // Fix: Use ?. and ?? to safely handle potential nulls
-        var targetTypes = applicationAssembly?.GetTypes()
-            .Where(t => t.Name.EndsWith("Handler") || t.Name.EndsWith("Service"))
-            .ToList() ?? new List<Type>();
-
-        // Act & Assert
-        foreach (var type in targetTypes)
+        [Fact]
+        public void HandlersAndServices_ShouldNotContainManualDTOMapping()
         {
-            // Get all methods declared directly inside the class
-            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                .Where(m => m.DeclaringType == type);
+            // Arrange: Get the assembly where your MediatR Handlers live
+            var applicationAssembly = Assembly.GetAssembly(typeof(GetMediaUnitByIdHandler));
 
-            foreach (var method in methods)
+            // Find all types that are Handlers or Services
+            // Fix: Use ?. and ?? to safely handle potential nulls
+            var targetTypes = applicationAssembly?.GetTypes()
+                .Where(t => t.Name.EndsWith("Handler") || t.Name.EndsWith("Service"))
+                .ToList() ?? new List<Type>();
+
+            // Act & Assert
+            foreach (var type in targetTypes)
             {
-                var methodBody = method.GetMethodBody();
-                if (methodBody == null) continue;
+                // Get all methods declared directly inside the class
+                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                    .Where(m => m.DeclaringType == type);
 
-                // Scan the local variables initialized inside the method
-                foreach (var localVariable in methodBody.LocalVariables)
+                foreach (var method in methods)
                 {
-                    var localType = localVariable.LocalType;
+                    var methodBody = method.GetMethodBody();
+                    if (methodBody == null) continue;
 
-                    // REQUIREMENT CHECK: If a handler manually instantiates a Response DTO, 
-                    // it violates the "Must use Mapster" rule.
-                    if (localType.Name.EndsWith("ResponseDTO"))
+                    // Scan the local variables initialized inside the method
+                    foreach (var localVariable in methodBody.LocalVariables)
                     {
-                        Assert.Fail(
-                            $"Requirement Violation! Method '{method.Name}' in '{type.Name}' " +
-                            $"manually initializes or utilizes a local '{localType.Name}'. " +
-                            $"You must use Mapster's '.Adapt<T>()' or '.ProjectToType<T>()' instead."
-                        );
+                        var localType = localVariable.LocalType;
+
+                        // REQUIREMENT CHECK: If a handler manually instantiates a Response DTO, 
+                        // it violates the "Must use Mapster" rule.
+                        if (localType.Name.EndsWith("ResponseDTO"))
+                        {
+                            Assert.Fail(
+                                $"Requirement Violation! Method '{method.Name}' in '{type.Name}' " +
+                                $"manually initializes or utilizes a local '{localType.Name}'. " +
+                                $"You must use Mapster's '.Adapt<T>()' or '.ProjectToType<T>()' instead."
+                            );
+                        }
                     }
                 }
             }

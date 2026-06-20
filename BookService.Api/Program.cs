@@ -28,9 +28,9 @@ builder.Services.AddSwaggerGen(options =>
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "bearer", // Standard för JWT
+        Scheme = "bearer", // Standard for JWT
         BearerFormat = "JWT",
-        Description = "Klistra in din JWT-token nedan. Skriv INTE 'Bearer ' själv."
+        Description = "Paste your JWT token below. Do NOT write 'Bearer ' yourself."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -91,7 +91,7 @@ var app = builder.Build();
 // ======================================================
 // MIDDLEWARE PIPELINE
 // ======================================================
-// Viktigt: Authentication/Authorization måste ske innan dina egna middlewares
+// Important: Authentication/Authorization must occur before custom middlewares
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

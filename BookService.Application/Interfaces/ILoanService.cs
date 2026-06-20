@@ -1,5 +1,5 @@
 ﻿using BookService.Application.DTOs;
-using BookService.Domain.Entities;
+
 namespace BookService.Application.Interfaces
 {
     public interface ILoanService

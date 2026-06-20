@@ -1,5 +1,7 @@
-﻿namespace BookService.Application.Common.Settings;
-public class JwtSettings
+﻿namespace BookService.Application.Common.Settings
 {
-    public string Token { get; set; } = string.Empty;
+    public class JwtSettings
+    {
+        public string Token { get; set; } = string.Empty;
+    }
 }
